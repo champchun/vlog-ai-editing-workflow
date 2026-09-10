@@ -32,3 +32,18 @@
 
 ## 核心
 Stage 3 只做 finishing，不重新做導演或剪輯決策；Rough Cut 只能作 reference，不可成為 Final Source。
+
+## Repo 資料結構
+執行前讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
+- Stage 1：`process/workspace/project-output/stage1_output/`
+- Storyboard Gate：`process/workspace/project-output/stage1_review/`
+- Stage 2：`process/workspace/project-output/stage2_output/`
+- 原始影片：`process/workspace/videos/`
+- 原始照片：`process/workspace/photos/`
+- GPS/Timeline：`process/workspace/gps/`
+- Stage 3 BGM：`process/stage-3-final-color-mix/assets/bgm/`
+- Stage 3 LUT：`process/stage-3-final-color-mix/assets/lut/`
+- 正式輸出：`process/workspace/project-output/stage3_output/`
+- 暫存：`process/workspace/temp/`
+
+BGM/LUT 是 Stage 3 專屬資源，維持在本 Stage 的 `assets/`，不搬到 workspace。Final Master 必須從 Original Video rebuild；Rough Cut 只作 reference。
