@@ -47,3 +47,15 @@ Event 不是單句 transcript。以時間、人物、空間、動作、互動、
 輸入齊備且 0B PASS 就直接執行，不要詢問是否開始。只有必要 Stage 0B 結果缺失或 Validation 不可通過才阻擋。
 
 完成後只回報：Metadata Count、Visual Region Count、Event Count、Event Type Distribution、Location Unknown Count、Color Unknown Count、Validation Overall、輸出路徑與 Warnings。
+
+## Repository Data Structure / Path Mapping
+執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
+- Stage 0A 輸入：`process/workspace/project-output/stage0a_output/`
+- Stage 0B 輸入：`process/workspace/project-output/stage0b_output/`
+- Original Video：`process/workspace/videos/`
+- Original Photos：`process/workspace/photos/`（可作 EXIF/時間/場景輔助來源，需保留 provenance）
+- GPS / Timeline：`process/workspace/gps/`（正式具名地點的重要 auxiliary source；日期與時間為硬限制）
+- 本階段正式輸出：`process/workspace/project-output/stage0c_output/`
+- 暫存：`process/workspace/temp/`
+
+在 Repo 模式，正式 Stage 0 輸出一律寫入 `process/workspace/project-output/stage0c_output/`。不要把 GPS 地名直接寫進 visual_summary；照片/GPS/Transcript 都必須與視覺證據分開保存 provenance。若資料可自動發現，不要要求使用者重複提供路徑。
