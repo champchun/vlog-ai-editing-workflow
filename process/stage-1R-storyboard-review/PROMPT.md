@@ -52,3 +52,15 @@ Input Shot Count = Storyboard Shot Count；Shot IDs/order/cut_start/cut_end 與 
 Stage 1 PASS 且 Original Media 可讀就直接產 Storyboard，不要問要不要開始或抽幾張圖；依上述規則自行判斷。完成 Storyboard 後停止等待人工 Review，不要進 Stage 2。
 
 完成後只回報：Input Shot Count、Storyboard Shot Count、Frame Count、Long Shot Count、Boundary Review Count、Missing Frames、Validation Overall、Storyboard HTML Path、Frames Path、Warnings，以及「等待 Human Review PASS 後才能進 Stage 2」。
+
+## Repository Data Structure / Path Mapping
+執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
+- Stage 1 正式輸入：`process/workspace/project-output/stage1_output/`
+- Original Video：`process/workspace/videos/`（所有 Storyboard frames 必須從這裡的 Original Source 抽取）
+- Original Photos：`process/workspace/photos/`（若 Stage 1 明確納入 photo item，可建立對應靜態 QA；不得用照片替代影片 Shot frame）
+- GPS / Timeline：`process/workspace/gps/`（僅作 context，不改寫 edit_decisions）
+- 本階段正式輸出根：`process/workspace/project-output/stage1_review/`
+- Storyboard 正式路徑：`process/workspace/project-output/stage1_review/storyboard/`
+- 暫存：`process/workspace/temp/`
+
+本 Prompt 內 `stage1_review/storyboard/` 在 Repo 模式映射為上述正式路徑。任何 review proxy 或 temp frame 都不得成為 Stage 2/3 source。Human Review Gate 必須保存於正式 `stage1_review/` 輸出中，不能只存在瀏覽器狀態。
