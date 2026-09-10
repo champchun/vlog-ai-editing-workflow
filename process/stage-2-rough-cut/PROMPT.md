@@ -53,3 +53,15 @@ No Editorial Change 必須證明 Input Shot Count=Executed Shot Count、Order �
 Required inputs FOUND 且前階段 PASS 就直接執行，不要詢問是否開始。只有 required source missing、validation FAIL 或技術無法執行才停止。
 
 完成後只回報：Input/Executed Shot Count、Unique Source Files、Missing Sources、Expected/Actual Runtime、Resolution/FPS、Audio Sample Rate、Audio Strategy 分布、Slow Motion/Reframe/LUT Count、Color Unknown Count、Duration Errors、Timeline Difference、Validation Overall、Rough Cut Path、Validation Report Path、Warnings。完成後停止，不進 Stage 3。
+
+## Repository Data Structure / Path Mapping
+執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
+- Stage 1 正式輸入：`process/workspace/project-output/stage1_output/`
+- Storyboard / Human Gate：`process/workspace/project-output/stage1_review/`
+- Original Video：`process/workspace/videos/`（所有影片 Shot 的唯一正式 Render Source）
+- Original Photos：`process/workspace/photos/`（只有 Stage 1 明確定義 photo item 時才可執行靜態素材；不得把照片誤當影片 source）
+- GPS / Timeline：`process/workspace/gps/`（Stage 2 原則不重新做地點判斷）
+- 本階段正式輸出：`process/workspace/project-output/stage2_output/`
+- 中間檔 / cache：`process/workspace/temp/`
+
+本 Prompt 內 `stage2_output/` 在 Repo 模式映射為 `process/workspace/project-output/stage2_output/`。`rough_cut_1080p.mp4` 必須放在正式 Stage 2 輸出；逐 Shot 暫存可放 `workspace/temp/`。禁止用 Storyboard JPG、0D proxy、temp proxy 或舊 rough cut 取代 `workspace/videos/` 的 Original Source。
