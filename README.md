@@ -6,13 +6,37 @@
 
 Stage 0A Local Pre-analysis → Stage 0B AI Visual Review → Stage 0C Event Fusion & Validation → Stage 0D Master Footage Review → Stage 1 Story & Edit Decisions → Stage 1R Storyboard Review Gate → Stage 2 Rough Cut → Stage 3 Final Color & Mix
 
+## 兩大工作區
+
+### `review/`｜Reviewer 操作區
+給 ChatGPT / Reviewer 驗收另一個 AI Agent 的產物。主要讀取 `review/VALIDATION_REVIEW_PROMPT.md`，依對應 Stage Prompt 做 PASS / PASS_WITH_WARNINGS / FAIL 與 Correction Prompt。
+
+### `process/`｜AI Agent 操作台
+給 AI Agent 真正執行各 Stage。所有 Stage README/PROMPT、Stage 專屬 examples/assets、共用資源與專案 workspace 都集中在這裡。
+
+## AI Agent Workspace
+
+`process/workspace/`：
+- `videos/`：Original Video Media
+- `photos/`：Original Photos
+- `gps/`：GPS / Google Maps Timeline / GPX / KML / GeoJSON / CSV 等
+- `project-output/`：各 Stage 正式輸出
+- `temp/`：可重建暫存、proxy、frame cache、中間檔
+
+詳細規則請讀 `process/WORKSPACE_RULES.md`。
+
+Stage 專屬資源跟著 Stage 放，例如 Stage 3 的 BGM/LUT 保留在 `process/stage-3-final-color-mix/assets/`；Stage 0D 的可重用 Console 範例保留在 `process/stage-0D-master-footage-review/examples/`。
+
 ## 核心 Human Review Gate
 
 - **Stage 0D = 防漏選**：所有原始影片都必須可快速檢視，AI 與 Human 各自留下候選判斷與理由。
 - **Stage 1R Storyboard = 防選錯**：在 Render 前，用正式 cut range 從 Original Source 抽出的 Storyboard 驗證 AI 的剪輯選擇。
 
-## 目錄原則
+## 新對話
 
-每個階段都有自己的目錄，除 `PROMPT.md` 與階段說明外，可自由放入該階段使用的 Python 腳本、JSON schema、範例輸出、測試資料、備註與工具設定。
+先讀 `PROJECT_INSTRUCTIONS.md`。
 
-`shared-resources/` 用來管理跨階段共用規則與資源說明；大型原始影片、Proxy、Render 成品不建議直接提交 GitHub，應以路徑／manifest 或外部儲存方式管理。
+- 要驗收 Agent 產物：再讀 `review/VALIDATION_REVIEW_PROMPT.md`。
+- 要讓 AI Agent 執行某 Stage：再讀 `process/README.md`、`process/WORKSPACE_RULES.md` 與對應 `process/stage-*/README.md` / `PROMPT.md`。
+
+GitHub repository 是工作流規格來源，不要只依賴聊天記憶。
