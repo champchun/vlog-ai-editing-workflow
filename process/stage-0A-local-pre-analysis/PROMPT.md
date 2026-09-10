@@ -42,3 +42,13 @@ visual_summary 只能描述畫面；audio_speakers/transcript 只描述聲音。
 必要素材存在就直接執行，不要詢問是否開始。只有原始素材無法存取、必要工具完全不可用或資料損壞時才阻擋並回報。
 
 完成後只回報：Source Clip Count、Total Duration、Transcript Sentence Count、Review Queue Count、Color Unknown Count、Hard Unusable Count、Validation Overall、主要輸出路徑與 Warnings。
+
+## Repository Data Structure / Path Mapping
+執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。在本 GitHub Repo 結構下，路徑規則高於舊版範例中的裸相對路徑：
+- Original Video：`process/workspace/videos/`
+- Original Photos：`process/workspace/photos/`（可讀 EXIF/時間/GPS 作為輔助資料，但不得把照片當影片）
+- GPS / Timeline：`process/workspace/gps/`（auxiliary evidence；日期/時間為硬限制）
+- 本階段正式輸出：`process/workspace/project-output/stage0a_output/`
+- 暫存：`process/workspace/temp/`
+
+本 Prompt 內原本寫的 `stage0a_output/`，在 Repo 模式一律映射為 `process/workspace/project-output/stage0a_output/`。若上述資料可自動發現，不要再要求使用者重複提供路徑。不得把 `temp/`、review proxy、舊輸出當 Original Source。
