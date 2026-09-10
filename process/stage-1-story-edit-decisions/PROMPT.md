@@ -63,3 +63,15 @@ Ending 必須有視覺品質與故事功能。不要因時間順序硬把 dark/b
 Stage 0/0D 輸入完整就直接執行；不要詢問是否開始或要不要採某個普通選擇。只有真正 blocking issue 才停止。
 
 完成後只回報：Scene Count、Selected/Excluded Events、Shot Count、Estimated Runtime、Role Distribution、Human Review Conflicts、Ending Event、Validation Overall、輸出路徑與 Warnings。完成後停止，下一階段為 Storyboard Review Gate。
+
+## Repository Data Structure / Path Mapping
+執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
+- Stage 0 正式資料：`process/workspace/project-output/stage0c_output/`
+- Stage 0D Human/Master Review：`process/workspace/project-output/stage0d_master_review/`
+- Original Video：`process/workspace/videos/`（Cut Point bounded review 與後續正式 source 的唯一影片來源）
+- Original Photos：`process/workspace/photos/`（可作 Scene Coverage / montage / insert 候選；若正式納入故事，必須明確標示 media_type=photo，不得假裝為 video shot）
+- GPS / Timeline：`process/workspace/gps/`（可輔助 Scene/location context，但不得重新推翻 Stage 0 provenance）
+- 本階段正式輸出：`process/workspace/project-output/stage1_output/`
+- 暫存：`process/workspace/temp/`
+
+本 Prompt 內 `stage1_output/` 在 Repo 模式映射為 `process/workspace/project-output/stage1_output/`。若要產生任何影片 Shot decision，`source_path` 必須指向 Original Video，而不是 Stage 0D proxy、Storyboard frame、old rough cut 或 temp。若資料可自動發現，不要要求使用者重複提供路徑。
