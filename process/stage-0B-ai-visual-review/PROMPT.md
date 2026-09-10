@@ -40,3 +40,14 @@
 能看到畫面且輸入完整就直接執行，不要詢問是否開始。只有真正 Vision 不可用或 source media 無法讀取才阻擋。
 
 完成後只回報：Reviewed Region Count、Temporal Coverage、Overrides Count、Unknown Count、Hard Unusable Count、Duplicate Summary Check、Validation Overall、輸出路徑與 Warnings。
+
+## Repository Data Structure / Path Mapping
+執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
+- Stage 0A 正式輸入：`process/workspace/project-output/stage0a_output/`
+- Original Video：`process/workspace/videos/`
+- Original Photos：`process/workspace/photos/`（可作獨立靜態視覺/EXIF 輔助，但不得替代影片 pixel review）
+- GPS / Timeline：`process/workspace/gps/`（只能作同日/同時段 auxiliary evidence）
+- 本階段正式輸出：`process/workspace/project-output/stage0b_output/`
+- 暫存抽幀/cache：`process/workspace/temp/`
+
+本 Prompt 內 `stage0a_output/` 與 `stage0b_output/` 在 Repo 模式分別映射到上述 project-output 子目錄。若資料可自動發現，不要要求使用者重新提供路徑。Visual semantics 必須來自實際像素；照片、GPS、Transcript 都不得替代影片 Vision。
