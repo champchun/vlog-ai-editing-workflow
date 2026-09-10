@@ -6,21 +6,21 @@
 不要要求使用者重新提供前階段 Agent 已建立的路徑。自動尋找最新且 PASS 的 `edit_decisions*.json`、`stage1_validation_report*.json`、`rough_cut_1080p.mp4`、`stage2_execution_log.json`、`stage2_validation_report.json`。以 Stage 2 實際引用且 validation=PASS 的 edit_decisions 為準。Original Media 依 `edit_decisions.source_path` 讀取；若 source_path 失效才在 Project Root 依 filename 尋找。Rough Cut 只能作 timing/story/reference，不得當 Final Source。
 
 ## Stage 3 專案資源
-本 repository 的 `stage-3-final-color-mix/assets/` 為 Stage 3 正式資源目錄。優先檢查以下資源：
+本 repository 的 `process/stage-3-final-color-mix/assets/` 為 Stage 3 正式資源目錄。優先檢查以下資源：
 
 ### BGM
 預設專案 BGM：
-`assets/bgm/quirky_romcom_3_4_bgm.mp3`
+`process/stage-3-final-color-mix/assets/bgm/quirky_romcom_3_4_bgm.mp3`
 
 此曲是本工作流已指定的可用 BGM 資源。Stage 3 應依 Story Section、Scene 情緒、Dialogue/Reaction 密度決定實際使用區段，不代表必須從頭到尾鋪滿整首。若專案另有使用者明確指定 BGM，使用者指定版本優先。
 
 ### Technical LUT
 本專案提供兩個 DJI OSMO Pocket 4P Technical LUT：
 
-1. `assets/lut/DJI OSMO Pocket 4P D-Log2 to Rec.709 V1.0 size65.cube`
+1. `process/stage-3-final-color-mix/assets/lut/DJI OSMO Pocket 4P D-Log2 to Rec.709 V1.0 size65.cube`
    - 僅在素材輸入 profile 被可靠確認為 **D-Log2** 時使用。
 
-2. `assets/lut/DJI OSMO Pocket 4P D-Log to Rec.709 V2.0 size33.cube`
+2. `process/stage-3-final-color-mix/assets/lut/DJI OSMO Pocket 4P D-Log to Rec.709 V2.0 size33.cube`
    - 僅在素材輸入 profile 被可靠確認為 **D-Log** 時使用。
 
 重要：
@@ -98,3 +98,18 @@ Validation 至少：`stage1_validation`、`stage2_validation`、`original_source
 如果 Required Inputs FOUND 且 Stage 1/2 PASS：禁止詢問使用者調色偏好、BGM 下歌時機、Scene 配樂方式、是否開始或是否繼續。非阻擋性選擇依既定家庭／旅行 Vlog 風格與上述專案資源自行決策並記錄 execution log。只有 Required Input 缺失、Original Source 找不到、Validation FAIL 或技術無法執行時才停止。
 
 完成後只回報：Stage 1/2 Validation、Input/Final Shot Count、Original Source Rebuild、Final Runtime、Resolution/FPS/Codec/Bitrate、Stage 3 Asset Detection、Color Profile Summary、LUT/Unknown/Exposure/WB Counts、Dialogue Processed Count、BGM Track Count與實際路徑、Ducking/Location Card Count、Audio Sample Rate、Final QC Overall、Master/Validation Paths、Warnings。完成後停止。
+
+## Repository Data Structure / Path Mapping
+執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
+- Stage 1 approved decisions：`process/workspace/project-output/stage1_output/`
+- Storyboard Gate：`process/workspace/project-output/stage1_review/`
+- Stage 2 Rough Cut / logs：`process/workspace/project-output/stage2_output/`
+- Original Video：`process/workspace/videos/`（Final 必須從此處 Original Source rebuild）
+- Original Photos：`process/workspace/photos/`（只有 approved timeline 明確包含 photo item 時才可納入）
+- GPS / Timeline：`process/workspace/gps/`（Location Card 可查此處，但必須遵守 evidence safety）
+- Stage 3 專屬 BGM：`process/stage-3-final-color-mix/assets/bgm/`
+- Stage 3 專屬 LUT：`process/stage-3-final-color-mix/assets/lut/`
+- 本階段正式輸出：`process/workspace/project-output/stage3_output/`
+- 暫存：`process/workspace/temp/`
+
+本 Prompt 內 `stage3_output/` 在 Repo 模式映射為 `process/workspace/project-output/stage3_output/`。Stage 3 專屬 BGM/LUT 不搬到 workspace；它們跟著 Stage 3 存放。Rough Cut 只作 reference，Final Source 必須回到 `workspace/videos/`。若上述資源可自動發現，不要要求使用者重複提供路徑。
