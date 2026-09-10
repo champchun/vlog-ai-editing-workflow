@@ -8,6 +8,22 @@ Stage 0A → 0B → 0C → Stage 0D Master Footage Review → Human Review Gate 
 ## 輸入
 自動尋找 Stage 0 正式輸出：`metadata_catalog.json`、`visual_summary.json`、`event_candidates.json`、`transcript_summary.txt`、`stage0_validation_report.json`，以及 Original Media。Stage 0 overall 必須 PASS。不要要求使用者重新提供前面 Agent 已產出的路徑。
 
+## 既有可重用範例程式
+本 repo 的 `stage-0D-master-footage-review/examples/` 已提供一套可重用 Prototype / Reference Kit，至少包含：
+
+- `build_stage0d.py`：讀取 Stage 0A～0C 輸出、建立 Master Clip data、抽 Hero/Contact frames、建立 review proxy、輸出 `master_footage_review.json`。
+- `app.py`：啟動本機 Review Server，提供 `/api/data` 與 `/api/save`，負責 Human Review 載入、Autosave 與 AI/Human relationship 計算。
+- `master_footage_review.html`：Stage 0D Review Console UI 範例，包含 Floating Player、Clip Cards、Hero/Contact Strip、AI Assessment、Human Review 與 Filters。
+- 範例 README：說明如何在新 Vlog Project 中複製工具、先完成 Stage 0A～0C，再執行 `python3 tools/build_stage0d.py`、`python3 tools/app.py`，並於 `http://localhost:8080` 開啟審片 Console。
+
+### 使用原則
+1. **優先參考並重用上述範例程式，不要每次從零重寫 UI / Server。**
+2. 範例是 Prototype / Reference Implementation，不是不可修改的正式規格；本 Prompt 的資料完整性、Human Review、Validation 與 Stage 1 Handoff 規則優先於範例程式。
+3. 若目前專案 JSON schema、目錄名稱、codec 或作業系統與範例不同，可調整程式讓它符合目前 Project，但不得降低本 Prompt 的驗證要求。
+4. 不得因範例 `build_stage0d.py` 曾讀取特定版本的 `edit_decisions_v11.json`，就要求 Stage 1 必須先完成；Stage 0D 正式位置仍在 Stage 1 前。任何 Stage 1 資料只能視為 optional compatibility/reference，不得成為 Stage 0D 必要輸入。
+5. 範例的 AI Recommendation 分數邏輯只是 Prototype。正式執行時仍需依本 Prompt 綜合 Visual、Event、Coverage、Interaction、Reaction、Novelty、Redundancy 與 Technical Quality，且理由必須具體。
+6. 若範例程式與本 Prompt 發生衝突，以本 Prompt 為準，並在 execution log 記錄修改點。
+
 ## 最重要規則：全部原始影片都要出現
 Master 的基本單位是原始 Source Video Clip，不是 Event、Shot 或 Transcript sentence。Project 中每一支原始影片都必須有一張 Master Clip Card，包括 AI 高度推薦、普通、重複、低價值、未形成 Event、純 B-roll、短片、長片。禁止只顯示 AI 候選。
 
@@ -68,7 +84,9 @@ Stage 1 必須讀 `master_footage_review.json`。Human Candidate 不得因 AI LO
 ## Validation
 Metadata Source Clip Count = Master Review Clip Count；所有 Clip 有 Hero；長片有 Contact Strip；所有 AI Recommendation 有具體 reason；Human Review save/persistence 測試 PASS；Proxy time mapping 1:1；Stage 0 原始資料未改。任何原片漏列 overall=FAIL。
 
+另外確認：若使用 `examples/` 範例程式，已依當前專案 schema/path 調整且沒有把 Stage 1 變成必要前置條件；Human Review reload 後仍存在；Console 的 frame/play seek 對應實際 source time。
+
 ## Autonomous Execution
 Stage 0 PASS 且 Original Media 可用就直接執行，不要問 Hero 怎麼選、Proxy 要不要做、要不要開始。只有真正 blocking issue 才停止。
 
-完成後只回報：Total Source Clips、Master Review Clips、Total Runtime、Hero Count、Long Clip Count、Contact Frames、AI recommendation 分布、Proxy Count、Human Save/Persistence Test、Validation Overall、Console 啟動方式/URL、主要 JSON 路徑與 Warnings。完成後停止，不進 Stage 1。
+完成後只回報：Total Source Clips、Master Review Clips、Total Runtime、Hero Count、Long Clip Count、Contact Frames、AI recommendation 分布、Proxy Count、Human Save/Persistence Test、Reusable Example Kit Used/Modified、Validation Overall、Console 啟動方式/URL、主要 JSON 路徑與 Warnings。完成後停止，不進 Stage 1。
