@@ -9,7 +9,7 @@ Stage 0A → 0B → 0C → Stage 0D Master Footage Review → Human Review Gate 
 自動尋找 Stage 0 正式輸出：`metadata_catalog.json`、`visual_summary.json`、`event_candidates.json`、`transcript_summary.txt`、`stage0_validation_report.json`，以及 Original Media。Stage 0 overall 必須 PASS。不要要求使用者重新提供前面 Agent 已產出的路徑。
 
 ## 既有可重用範例程式
-本 repo 的 `stage-0D-master-footage-review/examples/` 已提供一套可重用 Prototype / Reference Kit，至少包含：
+本 repo 的 `process/stage-0D-master-footage-review/examples/` 已提供一套可重用 Prototype / Reference Kit，至少包含：
 
 - `build_stage0d.py`：讀取 Stage 0A～0C 輸出、建立 Master Clip data、抽 Hero/Contact frames、建立 review proxy、輸出 `master_footage_review.json`。
 - `app.py`：啟動本機 Review Server，提供 `/api/data` 與 `/api/save`，負責 Human Review 載入、Autosave 與 AI/Human relationship 計算。
@@ -90,3 +90,15 @@ Metadata Source Clip Count = Master Review Clip Count；所有 Clip 有 Hero；�
 Stage 0 PASS 且 Original Media 可用就直接執行，不要問 Hero 怎麼選、Proxy 要不要做、要不要開始。只有真正 blocking issue 才停止。
 
 完成後只回報：Total Source Clips、Master Review Clips、Total Runtime、Hero Count、Long Clip Count、Contact Frames、AI recommendation 分布、Proxy Count、Human Save/Persistence Test、Reusable Example Kit Used/Modified、Validation Overall、Console 啟動方式/URL、主要 JSON 路徑與 Warnings。完成後停止，不進 Stage 1。
+
+## Repository Data Structure / Path Mapping
+執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
+- Stage 0 正式輸入：`process/workspace/project-output/stage0c_output/`
+- Original Video：`process/workspace/videos/`
+- Original Photos：`process/workspace/photos/`（可作 Scene context / EXIF 輔助，但 **不列入 Master Source Video Clip Count**）
+- GPS / Timeline：`process/workspace/gps/`（auxiliary evidence）
+- 本階段正式輸出：`process/workspace/project-output/stage0d_master_review/`
+- Review proxy / frame cache 暫存可放：`process/workspace/temp/`；若為 Stage 0D 正式 Console 資產，仍保存在 `stage0d_master_review/` 對應子目錄
+- 可重用實作範例：`process/stage-0D-master-footage-review/examples/`
+
+本 Prompt 內 `stage0d_master_review/` 在 Repo 模式映射為 `process/workspace/project-output/stage0d_master_review/`。Master 的基本單位仍是 `workspace/videos/` 中的 Source Video Clip；照片不得混入 Source Video Clip Count。若資料可自動發現，不要要求使用者重複提供路徑。
