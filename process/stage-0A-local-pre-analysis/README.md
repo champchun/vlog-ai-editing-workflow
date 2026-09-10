@@ -13,3 +13,13 @@
 
 ## 邊界
 不做 Story Planning、Event Selection、Shot Selection、Cut Point 或 Render。
+
+## Repo 資料結構
+執行前讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
+- 原始影片：`process/workspace/videos/`
+- 原始照片：`process/workspace/photos/`
+- GPS/Timeline：`process/workspace/gps/`
+- 正式輸出：`process/workspace/project-output/stage0a_output/`
+- 暫存：`process/workspace/temp/`
+
+Stage 0A 可讀照片 EXIF/GPS 作輔助，但不得把照片當影片；GPS/Timeline 僅作有時間約束的輔助證據。
