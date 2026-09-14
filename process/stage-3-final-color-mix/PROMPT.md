@@ -10,7 +10,7 @@
 
 ### BGM
 預設專案 BGM：
-`process/stage-3-final-color-mix/assets/bgm/quirky_romcom_3_4_bgm.mp3`
+`process/stage-3-final-color-mix/assets/bgm/2026-09-13_06_01_09.wav`
 
 此曲是本工作流已指定的可用 BGM 資源。Stage 3 應依 Story Section、Scene 情緒、Dialogue/Reaction 密度決定實際使用區段，不代表必須從頭到尾鋪滿整首。若專案另有使用者明確指定 BGM，使用者指定版本優先。
 
@@ -66,7 +66,7 @@ ffprobe bt709 tag 不等於素材真實 Rec.709。Profile 判定優先：Camera/
 可做 clip gain、low cut/rumble removal、輕度 noise reduction、level matching、gentle compression、limiter、短 audio fade。不要過度降噪或把環境音全部消掉；家庭 Vlog 要保留現場感。重要 Dialogue 音量清楚且 Scene 間一致。檢查 pop/click、clipping、audio sync。
 
 ## BGM Strategy
-優先評估專案預設 `quirky_romcom_3_4_bgm.mp3`。不要從頭到尾硬鋪一首。依 Hook、Setup、Exploration、Activity/Payoff、Ending 與 Scene 情緒安排，可用 2–4 個音樂區段；不一定是 2–4 首不同歌。同一首可重複不同段落。風格優先輕快、溫暖、家庭感、旅行感、俏皮、不搶對話；避免過度 Epic、EDM、悲情或強鼓點。
+優先評估專案預設 `2026-09-13_06_01_09.wav`。不要從頭到尾硬鋪一首。依 Hook、Setup、Exploration、Activity/Payoff、Ending 與 Scene 情緒安排，可用 2–4 個音樂區段；不一定是 2–4 首不同歌。同一首可重複不同段落。風格優先輕快、溫暖、家庭感、旅行感、俏皮、不搶對話；避免過度 Epic、EDM、悲情或強鼓點。
 
 有人聲時 BGM Duck，參考降低約 6–14 dB 但以聽感決定；重要 reaction、親子自然互動、動物互動可讓 BGM 暫退甚至停，保留原聲。不要強迫全片都有音樂。Ending 用自然、輕柔收尾，可淡出並保留少量環境音。
 

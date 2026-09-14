@@ -26,3 +26,4 @@ Stage 0D = 防漏選；Human Review 與 AI Review 必須分開保存，並交給
 - 暫存：`process/workspace/temp/`
 
 Master Review 的基本單位是 `workspace/videos/` 中的 Source Video Clip。Review proxy 只能審片，Stage 1/2/3 不得把 proxy 當正式來源。
+全素材審片 HTML 強制使用台灣繁體中文（`zh-TW`），包含介面文字與每支影片的 AI 摘要、評價及推薦理由。JSON 欄位與狀態代碼保持原樣，原始逐字稿及人工輸入保留原文。通用 `review/` 驗收報告可使用英文；完整語言規則與驗收條件見 `PROMPT.md`。

@@ -30,6 +30,14 @@ Master 的基本單位是原始 Source Video Clip，不是 Event、Shot 或 Tran
 ## 每張 Master Clip Card 至少顯示
 Filename、Creation Time、Duration、Resolution、FPS、Hero Frame、Contact Strip、Visual Summary、Visible People/Animals/Objects/Actions、Audio/Transcript Summary、Associated Events、AI Recommendation、AI Priority、AI Reason、Human Review Status、Human Reason。
 
+## HTML 顯示語言（強制）
+- `master_footage_review.html` 必須使用台灣繁體中文（`zh-TW`），並設定 `<html lang="zh-TW">` 與 UTF-8 編碼。
+- 所有供使用者閱讀的介面文字，包括標題、欄位標籤、按鈕、篩選器、狀態、提示與錯誤訊息，皆須以台灣繁體中文顯示。
+- 每支原始影片卡片中的 AI 產生文字，包括畫面摘要、人物／動物／物件／動作描述、聲音摘要、事件說明、推薦／不推薦理由及畫質警告，皆須以台灣繁體中文顯示。上游內容若為英文，須提供忠於原意的繁中顯示版本，不得新增推論或改寫 Stage 0 原始資料。
+- JSON 欄位名稱、ID、檔名、路徑、技術代碼與固定 enum 保持原樣；推薦程度、優先級及人工審片狀態以中文標籤顯示，儲存時仍使用原本 enum，例如 `STRONG_CANDIDATE` 顯示「強烈推薦」、`HIGH` 顯示「高」。
+- 原始逐字稿、引用原文與使用者輸入的 Human Reason 保留原文；需要中文輔助時另行顯示翻譯，不得覆寫原文。
+- 此語言要求適用於 Stage 0D HTML 審片介面，不要求通用 `review/` 驗收報告或其他階段的機器資料全面中文化；驗收報告可使用英文。
+
 ## Hero Frame
 每支影片挑一張最能代表「這支片主要在拍什麼」的真實 frame，不是單純最漂亮。優先主體清楚、主要活動、代表性 reaction、重要動物/物件與可快速回想素材的畫面。
 
@@ -85,6 +93,8 @@ Stage 1 必須讀 `master_footage_review.json`。Human Candidate 不得因 AI LO
 Metadata Source Clip Count = Master Review Clip Count；所有 Clip 有 Hero；長片有 Contact Strip；所有 AI Recommendation 有具體 reason；Human Review save/persistence 測試 PASS；Proxy time mapping 1:1；Stage 0 原始資料未改。任何原片漏列 overall=FAIL。
 
 另外確認：若使用 `examples/` 範例程式，已依當前專案 schema/path 調整且沒有把 Stage 1 變成必要前置條件；Human Review reload 後仍存在；Console 的 frame/play seek 對應實際 source time。
+
+HTML 語言驗收：確認 `lang=zh-TW`、UTF-8，以及所有介面文字與每支影片的 AI 摘要／理由均符合上述繁中顯示規則；不得只翻譯標題而留下英文評價。範例程式的英文預設理由也須提供繁中顯示版本。除上述原文與技術識別值例外，若有未中文化的顯示內容，overall=FAIL。
 
 ## Autonomous Execution
 Stage 0 PASS 且 Original Media 可用就直接執行，不要問 Hero 怎麼選、Proxy 要不要做、要不要開始。只有真正 blocking issue 才停止。

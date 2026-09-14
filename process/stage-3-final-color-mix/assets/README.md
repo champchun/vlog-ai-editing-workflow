@@ -5,7 +5,7 @@
 ## BGM
 目標檔案：
 
-`bgm/quirky_romcom_3_4_bgm.mp3`
+`bgm/2026-09-13_06_01_09.wav`
 
 用途：家庭／旅行 Vlog 的預設可用 BGM。Stage 3 依 Story Section、Dialogue、Reaction 與節奏決定實際使用區段與 ducking。
 

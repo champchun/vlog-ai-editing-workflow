@@ -15,7 +15,7 @@
 
 ## 本專案指定資源
 ### BGM
-`assets/bgm/quirky_romcom_3_4_bgm.mp3`
+`assets/bgm/2026-09-13_06_01_09.wav`
 
 此曲為目前工作流預設可用 BGM。實際使用區段由 Stage 3 依 Scene、Dialogue、Reaction 與節奏決定，不代表必須全片鋪滿。
 
