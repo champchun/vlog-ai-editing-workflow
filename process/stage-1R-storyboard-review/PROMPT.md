@@ -37,7 +37,14 @@ Storyboard 產出後不得自動進 Stage 2。等待 Human Review 結果：
 ## 可選 Review Console
 若環境允許，可產生 `storyboard.html`，支援依 Shot 展開、frame 點擊放大、依 Story Section/Role 瀏覽；但核心仍是實際影格與順序完整。若做影片預覽 Proxy，Proxy 僅供 Review，不能成為 Stage 2/3 source。
 
-## 輸出
+## 版本與互動修改
+Storyboard、validation 與 Human Review 必須保存所引用 edit_decisions 的版本及 SHA-256。內容變更後舊 PASS 失效，Stage 2 不得使用不相符的核准。
+
+拖曳順序/調整切點是選配介面，不要求本輪建置。若有此功能，只保存 `edit_change_requests.json`（base hash、Shot ID、原值、新值、使用者操作），交回 Stage 1 產生新版決策並重驗；不得 API 直接覆寫已核准 JSON。更新後重建受影響影格與完整順序，重新取得 Human PASS。
+
+若有音畫分離，卡片須顯示音訊原片、source range 與 timeline range；提供原音/組合預覽以檢查句尾、笑聲與 J/L 銜接。靜態圖不能代替音訊 QA。一般卡片影格必須在 cut range 內；額外 IN/OUT 外側影格明標「邊界參考」，只需在原片範圍內，不算正式 Shot 內容。
+
+## 輸出檔案
 `stage1_review/storyboard/` 至少包含：
 - `storyboard.html`
 - `storyboard_summary.json`
@@ -46,7 +53,7 @@ Storyboard 產出後不得自動進 Stage 2。等待 Human Review 結果：
 如有人工決策，再保存 `storyboard_human_review.json`。
 
 ## Validation
-Input Shot Count = Storyboard Shot Count；Shot IDs/order/cut_start/cut_end 與 edit_decisions 完全一致；所有 Shot 至少有規定 frames；frames time 全部落在 cut range；Hero/Ending 等重要 Shot 可視；`no_editorial_change=PASS`。任何漏 Shot 或 frame 取錯 source/time → overall=FAIL。
+Input Shot Count = Storyboard Shot Count；Shot IDs/order/cut_start/cut_end 與 edit_decisions 完全一致；所有 Shot 至少有規定 frames；正式 frames time 全部落在 cut range，邊界參考另依上述規則驗證；Hero/Ending 等重要 Shot 可視；`no_editorial_change=PASS`。任何漏 Shot 或 frame 取錯 source/time → overall=FAIL。另驗證 decision hash、音訊範圍與預覽一致；有音畫分離卻未提供可聽的檢查依據，不得宣告音訊 QA PASS。
 
 ## Autonomous Execution
 Stage 1 PASS 且 Original Media 可讀就直接產 Storyboard，不要問要不要開始或抽幾張圖；依上述規則自行判斷。完成 Storyboard 後停止等待人工 Review，不要進 Stage 2。

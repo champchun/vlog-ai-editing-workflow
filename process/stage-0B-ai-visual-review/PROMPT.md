@@ -13,7 +13,12 @@
 5. 對 Stage 0A 候選可確認、修正或否定；必須保留 `local_label`、`final_visual_label`、`label_source`、`confidence`、`local_label_overridden` 等 provenance。
 6. 動物物種、人物身分、可讀文字或地點信心不足時標 `unknown/uncertain`，禁止硬猜。
 
-## Quality
+## 小動作與動態複核
+基本前/中/後覆蓋不能被動態抽樣取代。對物件交接、拿取物品、短促 reaction、手勢或鏡頭轉向，增加事件前後取樣；若靜態影格無法判斷動作順序，觀看該區段原片或更密集連續影格。保留 `sample_times`、`sampling_reason`、`coverage_gaps` 與實際觀察依據。不得因未抽到某動作就宣稱全片沒有該動作；未解決的重要缺口必須明列。
+
+人物稱呼只採用使用者已確認的標註及可追溯證據；其他人物使用穩定的專案內 ID 或 unknown。一次標註不代表所有側臉、遮擋或跨片人物都已確認，也不得以聲音身分直接推定畫面人物。
+
+## Quality Assessment
 評估 blur、shake、dark、overexposure、occlusion、framing、usable ratio；只有 nearly black、fully occluded、corrupt、no valid footage、unrecognizable 等才可 `hard_unusable`。畫質普通但有重要互動/reaction 不得直接排除。
 
 ## 防止已知錯誤
@@ -31,6 +36,8 @@
 每個 review region 至少包含：`region_id`、`source_file`、`start`、`end`、`sample_times`、`visual_summary`、`visual_people`、`visual_animals`、`visual_objects`、`visual_actions`、`reaction`、`quality`、`confidence`、`provenance`。
 
 ## Validation
+另檢查重要小動作是否有連續時間證據、加密理由與未解決覆蓋缺口；重要 queue item 未實際複核卻標完成為 FAIL。若有使用者提供的漏辨識案例，逐例回查原片並記錄發現/未發現/不確定，不能只回報抽幀總數。
+
 確認所有 queue items 都有 review status；所有 final visual label 都有像素依據；visual/audio 分離；長 region 有 temporal coverage；duplicate generic summaries 不得大量出現；若 runtime 沒有真正 Vision 能力，`visual_semantic_status=UNAVAILABLE` 且 overall=FAIL，禁止用 transcript/GPS 偽造 PASS。
 
 ## 禁止事項

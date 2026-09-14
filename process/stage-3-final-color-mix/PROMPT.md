@@ -62,16 +62,34 @@ ffprobe bt709 tag 不等於素材真實 Rec.709。Profile 判定優先：Camera/
 
 同 Scene 相鄰 Shot 必須做 Exposure/WB/Contrast/Saturation/Skin Tone matching。風格：自然、溫暖、清爽、家庭／旅行 Vlog 感；避免重 Teal & Orange、過高對比、過飽和、黑位壓死、橘紅皮膚。
 
+## Shot Matching 執行證據
+每個 Scene 選具代表性的參考 Shot，逐鏡記錄曝光/WB/對比/膚色調整或無需調整的理由，抽查相鄰鏡頭前後對比。不同室內/戶外/夜間可採不同基準，不把全片壓到同一 IRE/Gamma；保留場景原有明暗與光色差異。技術 LUT 仍依可靠 profile 證據選擇，不能以分群推定 profile。
+
 ## Audio Cleanup
 可做 clip gain、low cut/rumble removal、輕度 noise reduction、level matching、gentle compression、limiter、短 audio fade。不要過度降噪或把環境音全部消掉；家庭 Vlog 要保留現場感。重要 Dialogue 音量清楚且 Scene 間一致。檢查 pop/click、clipping、audio sync。
+
+## 選配人聲修復
+只有實際難以聽清的片段才評估人聲隔離/去殘響，工具可用時保存原音、處理參數及前後试听結果。檢查兒童語音、笑聲、環境音與金屬/水聲等處理偽影；效果較差就降低強度或回退。不得承諾還原不存在的聲音細節，也不要求購買或使用某雲端服務；工具不可用時採現有 cleanup 並記錄限制。
 
 ## BGM Strategy
 優先評估專案預設 `2026-09-13_06_01_09.wav`。不要從頭到尾硬鋪一首。依 Hook、Setup、Exploration、Activity/Payoff、Ending 與 Scene 情緒安排，可用 2–4 個音樂區段；不一定是 2–4 首不同歌。同一首可重複不同段落。風格優先輕快、溫暖、家庭感、旅行感、俏皮、不搶對話；避免過度 Epic、EDM、悲情或強鼓點。
 
 有人聲時 BGM Duck，參考降低約 6–14 dB 但以聽感決定；重要 reaction、親子自然互動、動物互動可讓 BGM 暫退甚至停，保留原聲。不要強迫全片都有音樂。Ending 用自然、輕柔收尾，可淡出並保留少量環境音。
 
+## Ducking 與音訊時間軸驗收
+先使對話音量穩定，再依實際語音/重要 reaction 區段安排 BGM gain envelope 或 sidechain；記錄 threshold/attack/release/hold 或等效控制點。短停頓避免音樂瞬間湧起，段落結束平滑恢復；不使用固定 15%/60% 作為通用音量規格，也不單靠原音能量把風噪當對話觸發。
+
+實際聽查對話可懂度、笑聲保留、音樂抽動與 clipping，記錄檢查時間範圍及 loudness/peak 測量值；測量不能取代试听。完整保留 Stage 1 核准的 audio_segments 來源與時間，Stage 3 可 cleanup/mix，不可藉此重寫對話或 J/L 編輯。
+
+## Final Cache 與版本
+本階段可沿用 Stage 2 的快取驗證方法建立獨立 final cache，但不得直接使用 rough cut/Stage 2 畫面快取作 final source。只有由 Original Source 依本階段完整參數產生的快取可用；key 另含 LUT 檔案雜湊、逐鏡調色、音訊處理、BGM 與包裝設定等實際依賴。順序變動須重新評估 shot matching、轉場與整體混音；音樂/ducking 改動至少重建受影響音軌。
+
+Stage 2 execution log 與 validation 必須記錄核准 decision hash，Stage 3 比對後才執行並在輸出 log 延續同一 hash。快取命中仍須完整 Final QC。
+
 ## Visual Packaging
 只有可靠 GPS/Timeline/使用者確認/可讀招牌才可做具名 Location Card；新主要 Scene 第一次出現時顯示約 2–3 秒即可。禁止從畫面猜景點。不做全程逐字字幕；只允許地點、日期、必要說明。Transitions 以 Direct Cut 為主，必要才 short dissolve/fade/audio transition，避免花俏。
+
+地點卡的地名、時間分別保存證據及時區/時間匹配；無可靠地點可省略，不得由 GPS 推論「溫馨晚餐」等情緒文案。滑入動畫僅選配，需避免遮擋人物與關鍵動作。封面/SEO/Stage 4、9:16 衍生版與家庭跨專案記憶庫不屬本次 Stage 3 必做輸出。
 
 ## Ending
 必須保持 Stage 1/2 核准 Ending，不得把已排除的 dark/blurred/unrecognizable 尾素材放回。Ending 需自然收束。
@@ -88,6 +106,8 @@ ffprobe bt709 tag 不等於素材真實 Rec.709。Profile 判定優先：Camera/
 Total Shots、Source Files、LUT Applied Clips、LUT Filename、Confirmed Input Profile、Profile Evidence、Unknown Color Clips、Exposure Adjusted Shots、WB Adjusted Shots、Shot Matching Adjustments、Dialogue Processed Shots、BGM Tracks Used + File Paths、BGM Sections、Ducking Sections、Location Cards、Transitions、Final Runtime、Codec、Bitrate。
 
 ## Final QC
+另驗收 shot matching 對比、對話/笑聲保留、ducking 平滑、decision hash 與 cache provenance；未執行的選配修復標 NOT_APPLICABLE，不假報 PASS。若有上游 `review_cases.json`，針對本階段相關的蓋音、截斷或畫質案例回查成片，記錄原片與成片時間、檢查方式及結果；未解決的重要問題需 FAIL 或退回負責 Stage，不能只用工具執行成功代替品質合格。
+
 Video：black frame、decode error、freeze、frame jump、crop/reframe error、over/under exposure、skin tone、LUT mismatch、shot color jump。
 Audio：sync、dialogue clarity、BGM level、pop/click、NR artifact、scene level jump、ending fade、clipping。
 Timeline：Final Shot Count=Approved Shot Count、Final Shot Order=Approved Order、no unapproved editorial change。

@@ -31,6 +31,16 @@ Human Review 是 evidence，不得改寫 Stage 0 原始資料。
 ## Cut Point
 Whisper speech timestamps 只是 anchor，不是 cut point。真正 `cut_start/cut_end` 要看動作開始、對話自然起點、reaction 完成、視線、鏡頭 movement、回應與笑點落點。Dialogue 可參考 lead-in 約 0.3–1 秒、lead-out 0.5–2 秒，但不是固定規則。若要精準 cut，優先對 selected Event 的 Original Media 做 bounded review（Event 前後約 2–5 秒），而不是重跑全部素材。
 
+## 對話、動作與反應完整性
+禁止固定秒數 Jump Cut，也禁止把「完整句子加固定 0.5 秒」當通用規則。逐個重要 dialogue/action/reaction/payoff 做原片 bounded review，確認句首句尾、拿取/交接動作、回應和笑點沒有被意外截斷；保留必要呼吸空間但不保留無意義停頓。每個重要 Shot 記錄 `boundary_review`：checked_source_range、speech_complete、action_reaction_complete、reason；刻意中斷需有明確剪輯理由。
+
+## 明確音畫分離（按需要使用）
+J/L Cut 與 B-roll 覆蓋由 Stage 1 決定。需要分離時，在該 Shot 增加 `audio_segments`，每段明訂 `source_path`（原始音訊所在原片）、`source_start`、`source_end`、`timeline_start`（成片絕對秒數）、`speed`、`gain_db`、`fade_in`、`fade_out`、`role` 與 `source_sentence_ids`。時間單位為秒，音訊 timeline end = timeline_start + (source_end-source_start)/speed；fade 不得超出片段長度。
+
+`audio_segments` 存在時取代該 Shot 隱含原音，避免雙重播放；需保留原音也要明列。所有 Shot 的音訊段彙整為同一時間軸，禁止重複加入同一段；有意重疊需交代混音理由。舊版 `original/ambient/mute` 可延用；`carry_previous/next` 必須補出明確音訊段，不能讓 Stage 2 猜延續多久。畫面 sentence IDs 仍遵守原有 cut range；跨鏡音訊的句子放在音訊段自己的 sentence IDs，依音訊來源範圍驗證。
+
+慢動作僅在素材幀率、動作與原音處理支持且有明確理由時使用，不因笑臉/高潮標籤自動觸發；本輪不要求 speed ramp。追蹤裁切僅在必要時指定可執行的位置/時間關鍵點及安全邊界，保留互動雙方與物件，不要求永遠置中。9:16 衍生版須另有明確需求與決策版本，不改動既定 16:9 主片。
+
 ## Transcript Mapping
 每個 Shot 的 `source_sentence_ids` 只能包含與 cut range 實際重疊的句子：`sentence.end >= cut_start AND sentence.start <= cut_end`。純 B-roll 可 `[]`。禁止把整個 Event sentence list 複製到每個 Shot。
 
@@ -54,6 +64,8 @@ Ending 必須有視覺品質與故事功能。不要因時間順序硬把 dark/b
 `edit_decisions` 每個 Shot 至少：`shot_id`、`story_section`、`event_id`、`role`、`source_clip`、`filename`、`source_path`、`cut_start`、`cut_end`、`duration`、`source_sentence_ids`、`editorial_reason`、`audio_strategy`、`speed`、`reframe`、`transition_out`、`quality_warning`、`provenance`。
 
 ## Validation
+另檢查 `boundary_review_complete`、`audio_segment_ranges`、`audio_timeline_bounds`、`audio_overlap_intent`、`reframe_subject_coverage`；音訊引用、變速後時長、句子映射及淡入淡出必須有效。缺少必要音訊範圍不能以 carry enum 假裝可執行。Stage 1 validation 記錄本次 edit_decisions 的 SHA-256；後續審片與執行必須對應同一內容雜湊。
+
 至少確認：`selected_event_shot_coverage`、`scene_coverage`、`duplicate_selected_event_check`、`shot_role_diversity`、`transcript_mapping`、`cut_range_validity`、`ending_visual_quality`、`ending_story_function`、`human_review_conflicts_resolved`、`no_hard_unusable_selected`、`overall`。Selected Event 必須有 Shot；edit decisions 不得引用未 selected Event；Story Plan selected list 不得重複。
 
 ## 禁止事項

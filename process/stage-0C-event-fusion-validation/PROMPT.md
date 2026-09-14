@@ -19,6 +19,8 @@ Event 不是單句 transcript。以時間、人物、空間、動作、互動、
 日期/時間/GPS 是硬限制。Named location 只能來自同日 GPS/Timeline、使用者確認或畫面可讀招牌等可靠證據。Transcript/visual semantics 只能驗證同日候選，不能自行創造地點；資料不足就 unknown/approximate。visual_summary 不得因 GPS 而寫入沒看到的地點名稱。
 
 ## Transcript Mapping
+保留上游 `transcript_status`、`review_reason`、抽樣缺口與色彩證據；uncertain 台詞不能成為事件因果、人物身分或命名的唯一依據。若有 `source_proxy_manifest.json`，一併傳遞並以原片 ID 合併引用，禁止將 LRF 再形成獨立 Event。
+
 正式 sentence_ids 需可追溯；後續 Shot 的 source_sentence_ids 只應包含實際與 cut range 重疊的句子。純 B-roll 可為空陣列。
 
 ## Color Metadata Preservation
@@ -38,6 +40,8 @@ Event 不是單句 transcript。以時間、人物、空間、動作、互動、
 並保留 local_analysis 與 ai_visual_review provenance。
 
 ## Validation
+另確認語音不確定性未在融合時消失、事件引用不含重複代理素材、重要動作的來源時間可追溯。若不確定資料被升格為唯一可靠事件證據，overall=FAIL。
+
 確認：metadata source count 完整；visual_summary 真正描述畫面；visual subjects 與 audio speakers 分開；Event 非 transcript sentence 直接複製；Event source/time 可追溯；GPS 不跨日；color profile provenance 完整；重大欄位缺失 overall=FAIL。
 
 ## 禁止事項

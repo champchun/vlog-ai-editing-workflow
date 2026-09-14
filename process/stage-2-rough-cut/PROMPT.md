@@ -26,7 +26,15 @@ Stage 1 決定什麼，Stage 2 就執行什麼。禁止因「這個 Shot 普通�
 ## Audio Strategy
 `original`=保留原音；`ambient`=保留環境音；`mute`=靜音；`carry_previous`=允許簡單 L-cut；`carry_next`=允許簡單 J-cut。只在 Stage 1 已指定時執行，禁止自行發明。Stage 2 可做 sample rate 統一、clipping prevention、channel normalization，但不做 Final loudness、BGM、創意 EQ/Compression。
 
-## Color Safety
+## 音畫分離執行
+若 Shot 有 `audio_segments`，依 Stage 1 明訂的原片、source range、timeline_start、speed、gain 與 fade 組合，取代該 Shot 隱含音軌。獨立解碼聲音與畫面，禁止因畫面切換截斷跨鏡語音，也不得重複混入原音。缺少 carry_previous/next 的明確範圍，或 runtime 無法執行已指定的音訊/追蹤關鍵點時，回報決策/能力錯誤，不可默默降級直剪。音訊允許跨 Shot，但不得超出核准成片範圍；逐項檢查音畫同步及重疊理由。
+
+## 可驗證的增量渲染快取
+可重用本階段由 Original Source 渲染的逐 Shot 中間檔；這是計算快取，並非將審片 Proxy 或舊成片升格為來源。保存 `render_cache_manifest.json`，包含 source 內容雜湊、source range、speed、reframe、色彩轉換、輸出 codec/fps/解析度、工具版本及快取檔雜湊。參數或來源變動必須失效重算，找不到證據也重算。
+
+純重排可重用未變的畫面片段，但音訊時間軸、J/L 邊界與整體串接須重新驗證/處理。只有編碼參數與時間基準相容、邊界精準的已渲染片段才能 Stream Copy；任意原片切點不可靠 GOP copy 代替精準 decode。不承諾固定完成秒數；紀錄 cache hit/miss、失效原因與實際耗時，快取損壞時回到原片重建。
+
+## Color Safety Rules
 Stage 0 的 ffprobe bt709 tag 不等於真實 Rec.709。若 `color_profile=unknown` 或 source/confidence 不可靠：不得猜 D-Log/D-Log2/Rec.709、不得亂套 LUT。只做 pixel format/colorspace compatibility。只有可靠 camera metadata、user override、sidecar/known shooting setting 足以確認 profile 時，才可套對應 technical LUT。Stage 2 不做 Final Creative Color。
 
 ## Transitions / Packaging
@@ -43,8 +51,11 @@ Stage 0 的 ffprobe bt709 tag 不等於真實 Rec.709。若 `color_profile=unkno
 - `temp/`（如需逐 Shot 中間檔）
 
 Execution Log 每 Shot 至少：`shot_id`、`source_exists`、`cut_range_valid`、`expected_duration`、`actual_duration`、`audio_strategy_applied`、`speed_applied`、`reframe_applied`、`status`。
+Execution Log 與 validation 另保存 `edit_decisions_sha256`，供 Stage 3 核對；音畫分離時列出每段音訊的實際 source/timeline range，使用快取時附 manifest 路徑。
 
 ## Validation
+Stage 1 validation 與 Storyboard Human PASS 的 decision hash 必須等於本次 edit_decisions 的 SHA-256；缺少或不相符需返回對應階段重驗，不沿用舊 PASS。另檢查 `audio_segments_applied`、`cache_provenance` 及 `cache_invalidation`；快取命中不免除 duration、順序和音訊同步 QC。未使用快取或音畫分離時相應檢查為 NOT_APPLICABLE，須註明原因。
+
 至少：`stage1_input_validation`、`storyboard_gate`、`source_file_integrity`、`cut_range_integrity`、`timeline_order_integrity`、`shot_duration_integrity`、`timeline_duration_integrity`、`audio_sync_check`、`speed_execution`、`reframe_execution`、`color_profile_safety`、`ending_integrity`、`no_unapproved_editorial_change`、`overall`。
 
 No Editorial Change 必須證明 Input Shot Count=Executed Shot Count、Order 一致、沒有新增/刪除/重排/修改 cut point。

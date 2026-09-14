@@ -38,7 +38,12 @@ Filename、Creation Time、Duration、Resolution、FPS、Hero Frame、Contact St
 - 原始逐字稿、引用原文與使用者輸入的 Human Reason 保留原文；需要中文輔助時另行顯示翻譯，不得覆寫原文。
 - 此語言要求適用於 Stage 0D HTML 審片介面，不要求通用 `review/` 驗收報告或其他階段的機器資料全面中文化；驗收報告可使用英文。
 
-## Hero Frame
+## 審片資訊與問題回饋
+原片數量排除已確認 LRF/Review Proxy；有上游配對表時沿用並驗證，不另建立代理卡片。每張卡另顯示語音不確定、視覺覆蓋缺口與未確認人物的繁中提示，不能將 uncertain 包裝成確定摘要。
+
+使用者若指出漏掉動作、辨識錯誤或重要聲音，保存原片 ID、時間範圍、問題與期望檢查結果到 `review_cases.json`，作為下次相關 Stage 的回歸案例；這些意見不得直接改寫 Stage 0 事實。沒有案例時不要求使用者額外標註。
+
+## Hero Frame Selection
 每支影片挑一張最能代表「這支片主要在拍什麼」的真實 frame，不是單純最漂亮。優先主體清楚、主要活動、代表性 reaction、重要動物/物件與可快速回想素材的畫面。
 
 ## 長片 Contact Strip

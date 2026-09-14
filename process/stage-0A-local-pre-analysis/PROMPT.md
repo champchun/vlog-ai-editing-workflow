@@ -13,7 +13,23 @@
 5. local visual labels 一律視為 candidate；人物身分、動物物種、複雜 reaction、場景名稱信心不足時標 uncertain/unknown。
 
 ## Color Safety
+優先用可用的相機 metadata / ExifTool / sidecar 解析色彩資訊；DJI 私有串流僅在解析器明確支援該機型與欄位語意時採信。記錄工具版本、機型、原始欄位值及映射依據；不可假設所有檔案都有 dbgi/djmd 或某個 gamma 欄位，也不承諾零誤差。證據衝突時保留 unknown 並列出衝突。
+
 ffprobe 顯示 bt709 不等於素材真實 profile 為 Rec.709。輸出必須分開：detected_color_metadata、color_profile、color_profile_source、color_profile_confidence。沒有可靠相機 metadata、sidecar 或使用者明確 override 時，color_profile=unknown；禁止猜 D-Log/D-Log2/Rec.709。
+
+## 語音可靠性與 VAD
+- 轉錄前啟用可用的 VAD，記錄 ASR 模型/版本、語言設定與 VAD 參數。VAD 只用於挑選轉錄區段，不得刪除或縮短原始音訊；輸出時間戳必須映射回原片時間。
+- 不把 VAD 當去風噪工具；保留短促兒童語音、笑聲與 reaction 的原音。對低可信度、重複文字、非語音區段冒出句子或異常語言的區段，做局部重聽/重辨識，仍不確定就標記 uncertain，不得補寫合理台詞。
+- 只有已知語言時才指定辨識語言；異語文字是複核訊號，不可一律當亂碼刪除。不得假設存在未驗證的兒童專用模型。
+- 每個句子增加 `transcript_status`（reliable/uncertain）、`review_reason`；非語音事件另行記錄，不偽造成台詞。工具無法提供 calibrated confidence 時保留原始評分及其定義，不冒充機率。
+
+## 原片與 LRF 代理檔配對
+- 若存在 LRF，以檔名、時間、時長與抽查內容建立 `source_proxy_manifest.json`；記錄 source/proxy path、時長、時間偏移與配對狀態，不只靠同名判定。
+- 已確認的代理檔不另計 Source Clip，不另產重複事件；未配對 LRF 列出 warning，不擅自認作原片或刪除。
+- 此輪 LRF 僅作已驗證時間映射的審片播放用途；視覺分析與正式渲染仍依各 Stage 的 Original Source 規則。無 LRF 時此檢查為 NOT_APPLICABLE，不阻擋。
+
+## 視覺抽樣與增量分析
+保留全片基本時間覆蓋，再依 scene change、鏡頭轉向、人物互動、物件交接與不確定區段加密。不得只依畫面變化率決定是否複核；固定鏡頭也可能有重要小動作。記錄 sample_times、加密理由及尚未覆蓋的區段。相同原片內容與分析模型/參數可重用快取；原片或設定變更時僅重算受影響項目並保留 provenance。
 
 ## Visual / Audio 分離
 visual_summary 只能描述畫面；audio_speakers/transcript 只描述聲音。欄位至少分為 visual_people、visual_animals、visual_objects、visual_actions、audio_speakers。禁止用 transcript 補寫沒看到的動物、人物或場景。
@@ -33,6 +49,8 @@ visual_summary 只能描述畫面；audio_speakers/transcript 只描述聲音。
 - `stage0a_validation_report.json`
 
 ## Validation
+另檢查 `vad_timestamp_mapping`、`transcript_uncertainty_recorded`、`proxy_deduplication`、`sampling_coverage`、`color_evidence_preserved`，附檔案/時間範圍證據。代理重複計數、時間戳錯位或把不確定台詞當可靠輸出為 FAIL；單純辨識不清但已正確標記可列 warning。
+
 確認 source clip count 對得上實際素材；每支影片都有 metadata；Transcript 與 visual 不混欄；color_profile 沒有把 ffprobe tag 當真實 profile；review queue 可追溯到 source/time range。重大缺失 overall=FAIL。
 
 ## 禁止事項
