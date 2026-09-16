@@ -29,18 +29,26 @@ Event 不是單句 transcript。以時間、人物、空間、動作、互動、
 ## 不得過度融合
 不同時間、不同活動或明顯不同 interaction 不應因為同一人物/同地點就合成一個巨大 Event。也不得把每句對話拆成 Event。以「一件可理解的事情」為單位。
 
+## Hero Scene Candidate Handoff
+讀取 Stage 0B 的 `hero_scene_candidates.json`，將已由 Agent `CONFIRMED` 的候選對應到完整 Event；必要時擴張或縮小事件邊界以涵蓋 Trigger → Development → Reaction → Result，但不得超出實際證據。`REJECTED` 不升格，`NEEDS_MORE_REVIEW` 保留 unresolved 狀態。輸出保留 VLM 提名與 Agent 複核的分離 provenance。
+
+Event 可新增 `hero_scene_assessment`：`candidate_id`、`agent_status`、`hero_functions`（hook/climax/payoff/emotional_core/ending）、`evidence_ranges`、`context_complete`、`limitations`。這仍是 Stage 1 的優先複核提示，不是正式 selected=true，也不能以 Hero 候選取代全場景 Event coverage。
+
 ## 輸出
 正式 Stage 0 輸出至少：
 - `metadata_catalog.json`
 - `transcript_summary.txt`
 - `visual_summary.json`
 - `event_candidates.json`
+- `hero_scene_candidates.json`（保留 Stage 0B 提名、Agent 複核及 Event 對應）
 - `stage0_validation_report.json`
 
 並保留 local_analysis 與 ai_visual_review provenance。
 
 ## Validation
 另確認語音不確定性未在融合時消失、事件引用不含重複代理素材、重要動作的來源時間可追溯。若不確定資料被升格為唯一可靠事件證據，overall=FAIL。
+
+另確認所有 CONFIRMED Hero 候選皆能對應合法 source/time 與 Event，VLM/Agent provenance 未被合併覆寫；把候選直接標為正式入選或因沒有 Hero 而捏造事件，overall=FAIL。
 
 確認：metadata source count 完整；visual_summary 真正描述畫面；visual subjects 與 audio speakers 分開；Event 非 transcript sentence 直接複製；Event source/time 可追溯；GPS 不跨日；color profile provenance 完整；重大欄位缺失 overall=FAIL。
 

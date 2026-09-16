@@ -6,7 +6,7 @@
 Stage 0A → 0B → 0C → Stage 0D Master Footage Review → Human Review Gate → Stage 1 → Storyboard Review → Stage 2。
 
 ## 輸入
-自動尋找 Stage 0 正式輸出：`metadata_catalog.json`、`visual_summary.json`、`event_candidates.json`、`transcript_summary.txt`、`stage0_validation_report.json`，以及 Original Media。Stage 0 overall 必須 PASS。不要要求使用者重新提供前面 Agent 已產出的路徑。
+自動尋找 Stage 0 正式輸出：`metadata_catalog.json`、`visual_summary.json`、`event_candidates.json`、`hero_scene_candidates.json`、`transcript_summary.txt`、`stage0_validation_report.json`，以及 Original Media。Stage 0 overall 必須 PASS。不要要求使用者重新提供前面 Agent 已產出的路徑。
 
 ## 既有可重用範例程式
 本 repo 的 `process/stage-0D-master-footage-review/examples/` 已提供一套可重用 Prototype / Reference Kit，至少包含：
@@ -45,6 +45,8 @@ Filename、Creation Time、Duration、Resolution、FPS、Hero Frame、Contact St
 
 ## Hero Frame Selection
 每支影片挑一張最能代表「這支片主要在拍什麼」的真實 frame，不是單純最漂亮。優先主體清楚、主要活動、代表性 reaction、重要動物/物件與可快速回想素材的畫面。
+
+Hero Frame 與 Hero Scene 必須分開顯示：Hero Frame 是每支原片的代表縮圖；Hero Scene 是 Stage 0B VLM 提名、經 Agent 查看實際媒體後複核的事件區段。Clip Card 可顯示相關 Hero Scene 的候選/複核狀態、時間範圍與理由，但不得因某 Clip 沒有 Hero Scene 就省略該 Clip，也不得把 CONFIRMED 誤標成 Stage 1 已正式選用。
 
 ## 長片 Contact Strip
 - `<15 秒`：Hero，必要時 Mid。

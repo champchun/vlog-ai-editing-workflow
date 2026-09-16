@@ -14,6 +14,13 @@
 
 此曲是本工作流已指定的可用 BGM 資源。Stage 3 應依 Story Section、Scene 情緒、Dialogue/Reaction 密度決定實際使用區段，不代表必須從頭到尾鋪滿整首。若專案另有使用者明確指定 BGM，使用者指定版本優先。
 
+### BGM 預分析與 Stage 1 交接
+同目錄的 `2026-09-13_06_01_09.beats.json` 保存拍點、BPM、相對能量區段與音檔 SHA-256。使用前核對 source.sha256；相同音檔與分析設定直接重用，音檔/方法變動才用 `assets/bgm/analyze_bgm.py` 重建。不得把能量 high 當成副歌或已確認的情緒高潮。
+
+若 Stage 1 story_plan 有 `music_sections` 與 Shot 的 `beat_alignment`，必須依其音樂來源、source range、timeline_start 與 playback_speed 混音；使用 timeline_start + (source_beat - source_start) / playback_speed 驗證對拍。不可自行改音樂起點/速度破壞已核准對拍，也不可為拍點修改畫面切點。有衝突回 Stage 1。Stage 1 未指定音樂段時，仍可依既有 BGM Strategy 選段配樂，但不得藉此重新剪輯。
+
+記錄採用的分析檔、音檔雜湊、music_sections、選用範圍的聽查結果與對拍偏差；Final QC 檢查音樂時間映射及畫面內容完整性。僅有自動分析 JSON 不代表已完成聽查。對含 music_sections 的專案，核准與 execution log 另保存 story_plan 的 SHA-256，避免決策檔未變但音樂計畫已變。
+
 ### Technical LUT
 本專案提供兩個 DJI OSMO Pocket 4P Technical LUT：
 
@@ -91,19 +98,27 @@ Stage 2 execution log 與 validation 必須記錄核准 decision hash，Stage 3 
 
 地點卡的地名、時間分別保存證據及時區/時間匹配；無可靠地點可省略，不得由 GPS 推論「溫馨晚餐」等情緒文案。滑入動畫僅選配，需避免遮擋人物與關鍵動作。封面/SEO/Stage 4、9:16 衍生版與家庭跨專案記憶庫不屬本次 Stage 3 必做輸出。
 
+## 包裝計畫與燒錄前預檢
+Final render 前先產生 `packaging_plan.json`。所有 caption、日期／地點卡、其他文字、圖示與選配 SFX 各自記錄：`element_id`、`type`、`timeline_start`、`timeline_end`、`content_or_asset`、`evidence`、`purpose`、`safe_area`、`subject_or_action_collision`、`subtitle_collision`、`dialogue_overlap`、`preview_status`。SFX 另記 gain、fade 與是否覆蓋語音；沒有包裝元素時仍輸出空 items 並標 `status=NOT_APPLICABLE`，不得為了填計畫硬加元素。
+
+對所有非空項目產生低解析局部影片、contact sheet 或等效可視／可聽預覽，再檢查文字可讀時間、手機安全區、是否遮住臉／主體／關鍵動作、圖卡彼此或與字幕重疊、SFX 是否蓋住對話及元素密度。發現衝突先調整包裝位置、長度或音量；不得修改核准 Shot、cut point 或對話來遷就包裝。未完成預覽的元素不得進 Final Master。
+
+音訊診斷或自動建議濾鏡只可作候選。Execution Log 應保存實際分析區間、是否使用 VAD／語音區分、工具與參數、測量限制，以及重要對話、兒童語音、笑聲和環境聲的處理前後聽查結果；不得用固定噪音門檻或單一短區間分析直接套用全片濾鏡。
+
 ## Ending
 必須保持 Stage 1/2 核准 Ending，不得把已排除的 dark/blurred/unrecognizable 尾素材放回。Ending 需自然收束。
 
 ## 輸出
 `stage3_output/` 至少：
 - `final_vlog_1080p_master.mp4`
+- `packaging_plan.json`
 - `stage3_execution_log.json`
 - `stage3_validation_report.json`
 - `temp/`（如需）
 可選 `final_vlog_1080p_master_hevc.mp4`。
 
 ## Execution Log 至少記錄
-Total Shots、Source Files、LUT Applied Clips、LUT Filename、Confirmed Input Profile、Profile Evidence、Unknown Color Clips、Exposure Adjusted Shots、WB Adjusted Shots、Shot Matching Adjustments、Dialogue Processed Shots、BGM Tracks Used + File Paths、BGM Sections、Ducking Sections、Location Cards、Transitions、Final Runtime、Codec、Bitrate。
+Total Shots、Source Files、LUT Applied Clips、LUT Filename、Confirmed Input Profile、Profile Evidence、Unknown Color Clips、Exposure Adjusted Shots、WB Adjusted Shots、Shot Matching Adjustments、Dialogue Processed Shots、Audio Diagnostic Scope/Limitations、Before/After Audition、BGM Tracks Used + File Paths、BGM Sections、Ducking Sections、Location Cards、Packaging Elements/Preview Status、Transitions、Final Runtime、Codec、Bitrate。
 
 ## Final QC
 另驗收 shot matching 對比、對話/笑聲保留、ducking 平滑、decision hash 與 cache provenance；未執行的選配修復標 NOT_APPLICABLE，不假報 PASS。若有上游 `review_cases.json`，針對本階段相關的蓋音、截斷或畫質案例回查成片，記錄原片與成片時間、檢查方式及結果；未解決的重要問題需 FAIL 或退回負責 Stage，不能只用工具執行成功代替品質合格。
@@ -112,7 +127,7 @@ Video：black frame、decode error、freeze、frame jump、crop/reframe error、
 Audio：sync、dialogue clarity、BGM level、pop/click、NR artifact、scene level jump、ending fade、clipping。
 Timeline：Final Shot Count=Approved Shot Count、Final Shot Order=Approved Order、no unapproved editorial change。
 
-Validation 至少：`stage1_validation`、`stage2_validation`、`original_source_rebuild`、`timeline_integrity`、`color_profile_safety`、`technical_color`、`lut_profile_match`、`shot_matching`、`exposure_qc`、`white_balance_qc`、`audio_cleanup`、`dialogue_leveling`、`bgm_mix`、`ducking`、`audio_sync`、`graphics_safety`、`ending_integrity`、`final_video_qc`、`final_audio_qc`、`overall`。
+Validation 至少：`stage1_validation`、`stage2_validation`、`original_source_rebuild`、`timeline_integrity`、`color_profile_safety`、`technical_color`、`lut_profile_match`、`shot_matching`、`exposure_qc`、`white_balance_qc`、`audio_cleanup`、`audio_diagnostic_limitations`、`dialogue_leveling`、`bgm_mix`、`ducking`、`audio_sync`、`packaging_plan_integrity`、`packaging_preview_complete`、`graphics_safety`、`sfx_dialogue_safety`、`ending_integrity`、`final_video_qc`、`final_audio_qc`、`overall`。
 
 ## Autonomous Execution Rule
 如果 Required Inputs FOUND 且 Stage 1/2 PASS：禁止詢問使用者調色偏好、BGM 下歌時機、Scene 配樂方式、是否開始或是否繼續。非阻擋性選擇依既定家庭／旅行 Vlog 風格與上述專案資源自行決策並記錄 execution log。只有 Required Input 缺失、Original Source 找不到、Validation FAIL 或技術無法執行時才停止。
