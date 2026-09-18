@@ -18,8 +18,11 @@
 人物互動 > 真實 reaction > 小事件/意外 > 有意義對話 > 發現 > 活動 > 景點特色 > 美麗空鏡。Story spine 可用 Hook → Setup → Exploration/Development → Micro Events → Reaction/Payoff → Ending。Cold Open 可選 3–8 秒，但只有真的有價值才使用。
 
 ## Stage 0D Human Review 規則
+- Human `summary_feedback` 是對內容的補充／修正，不等於選片要求；`affects_selection` 必須為 false。Stage 1 可將它作為有 provenance 的 Human context，但不得單獨提高分數或自動入選。若與原片像素／聲音衝突，列入 conflict review 並重看指定範圍。
+- Human `NO_PREFERENCE`：已查看或補充內容，但沒有指定採用或排除；依一般 Coverage 與故事規則評估。
 - Human `CANDIDATE`：必須重新認真評估，不得因 AI LOW 直接略過。
-- `IMPORTANT/MUST_REVIEW`：若最後不採用，必須寫 `exclusion_reason`。
+- `IMPORTANT`：不得快速略過；若最後不採用，必須寫 `exclusion_reason`。
+- `MUST_REVIEW`：必須重新查看指定 Original Media 範圍後再決定，不代表一定入選。
 - `MUST_KEEP`：除 hard_unusable、technical failure 或使用者核准替代外原則必留。
 - `SKIP`：視為強烈人工意見，但若其內容是唯一 Scene Coverage，需標示衝突並在 validation 回報。
 - `AI_SKIP_HUMAN_KEEP` 必須列入 conflict review。

@@ -35,6 +35,11 @@ Filename、Creation Time、Duration、Resolution、FPS、Hero Frame、Contact St
 - 所有供使用者閱讀的介面文字，包括標題、欄位標籤、按鈕、篩選器、狀態、提示與錯誤訊息，皆須以台灣繁體中文顯示。
 - 每支原始影片卡片中的 AI 產生文字，包括畫面摘要、人物／動物／物件／動作描述、聲音摘要、事件說明、推薦／不推薦理由及畫質警告，皆須以台灣繁體中文顯示。上游內容若為英文，須提供忠於原意的繁中顯示版本，不得新增推論或改寫 Stage 0 原始資料。
 - JSON 欄位名稱、ID、檔名、路徑、技術代碼與固定 enum 保持原樣；推薦程度、優先級及人工審片狀態以中文標籤顯示，儲存時仍使用原本 enum，例如 `STRONG_CANDIDATE` 顯示「強烈推薦」、`HIGH` 顯示「高」。
+- 下拉選單、按鈕與篩選器不得直接顯示英文 enum。至少使用以下繁中標籤映射：
+  - AI 推薦：`STRONG_CANDIDATE=強烈推薦`、`CANDIDATE=建議考慮`、`OPTIONAL=可選素材`、`LIKELY_SKIP=可能略過`、`TECHNICAL_REJECT=技術不合格`。
+  - 優先級：`HIGH=高`、`MEDIUM=中`、`LOW=低`。
+  - 人工選片意願：`NOT_REVIEWED=尚未審查`、`NO_PREFERENCE=不指定是否選用`、`CANDIDATE=列為候選`、`IMPORTANT=重要素材`、`MUST_REVIEW=必須再看`、`MUST_KEEP=必須保留`、`SKIP=略過`。
+  - 摘要回饋：`NONE=不修改`、`APPEND=補充內容`、`CORRECT=修正錯誤`、`REPLACE=改寫摘要`。
 - 原始逐字稿、引用原文與使用者輸入的 Human Reason 保留原文；需要中文輔助時另行顯示翻譯，不得覆寫原文。
 - 此語言要求適用於 Stage 0D HTML 審片介面，不要求通用 `review/` 驗收報告或其他階段的機器資料全面中文化；驗收報告可使用英文。
 
@@ -65,25 +70,31 @@ Hero Frame 與 Hero Scene 必須分開顯示：Hero Frame 是每支原片的代�
 必須具體說明為什麼推薦/不推薦，綜合 Visual、Transcript、Event、Coverage、Interaction、Reaction、Novelty、Redundancy、Technical Quality。禁止只有「story value low」「not interesting」等空泛理由。不得只靠 Transcript 判斷畫面。
 
 ## Human Review
-每支 Clip 提供並可保存：`NOT_REVIEWED`、`CANDIDATE`、`IMPORTANT/MUST_REVIEW`、`MUST_KEEP`、`SKIP`，以及自由文字 Human Reason。
+每支 Clip 的「摘要回饋」與「選片意願」必須是兩組獨立控制。介面預設使用繁中標籤，JSON 仍保存固定 enum。
+
+摘要回饋保存為 `summary_feedback`：`action=NONE/APPEND/CORRECT/REPLACE`、`text`、`target_fields`、`affects_selection=false`、`updated_at`。原始 AI summary 不得覆寫；畫面另外呈現 Human 補充／修正，合併顯示時標明 provenance。使用者只輸入補充文字而未指定選片意願時，狀態保存為 `NO_PREFERENCE`，不得自動改成 Candidate、Important 或 Must Keep。
+
+人工選片意願保存於 `human_review.status`：`NOT_REVIEWED`、`NO_PREFERENCE`、`CANDIDATE`、`IMPORTANT`、`MUST_REVIEW`、`MUST_KEEP`、`SKIP`，並以 `human_review.reason` 保存選片理由。`NOT_REVIEWED` 表示尚未完成檢視；`NO_PREFERENCE` 表示已查看或補充內容，但沒有要求採用或排除。
 
 定義：
+- `NO_PREFERENCE`：補充／修正資訊，不影響選片優先級。
 - `CANDIDATE`：Stage 1 必須認真重新評估，不代表一定入選。
 - `IMPORTANT`：Stage 1 不得快速略過；若最後不採用需 `exclusion_reason`。
+- `MUST_REVIEW`：Stage 1 必須重新查看指定原片範圍後再決定，不代表一定入選。
 - `MUST_KEEP`：除 hard_unusable、technical failure 或使用者同意替代外原則上必留。
 - `SKIP`：使用者認為不需進正式候選。
 
 ## AI 與 Human 必須分開保存
-不可合併成 selected=true/false。建立 `ai_review` 與 `human_review`，並計算 `review_relationship`：`AGREE_KEEP`、`AGREE_SKIP`、`AI_KEEP_HUMAN_SKIP`、`AI_SKIP_HUMAN_KEEP`、`HUMAN_NOT_REVIEWED`。`AI_SKIP_HUMAN_KEEP` 必須在 Stage 1 特別檢查。
+不可合併成 selected=true/false。建立 `ai_review` 與 `human_review`，並計算 `review_relationship`：`AGREE_KEEP`、`AGREE_SKIP`、`AI_KEEP_HUMAN_SKIP`、`AI_SKIP_HUMAN_KEEP`、`HUMAN_NO_PREFERENCE`、`HUMAN_NOT_REVIEWED`。`AI_SKIP_HUMAN_KEEP` 必須在 Stage 1 特別檢查；`HUMAN_NO_PREFERENCE` 不形成 keep/skip 關係。
 
 ## Human Review 持久化
 不要只靠瀏覽器暫存。建議 Python local server + HTML/CSS/Vanilla JS；每次勾選或輸入理由後 Autosave 到 `human_footage_review.json`，並可合併產生 `master_footage_review.json`。重新啟動不得清空 Human Review。
 
 ## Filter / Quick Review
-至少支援：全部、尚未審查、AI Strong/Candidate/Likely Skip、Human Candidate/Important/Must Keep/Skip、AI/Human 意見不同、長影片、人物、動物、Reaction。提供「Review AI Skips」：AI LOW/LIKELY_SKIP + Human 尚未審查。預設依拍攝時間排序。
+至少支援：全部、尚未審查、AI 強烈推薦／建議考慮／可能略過、Human 不指定／候選／重要／必須再看／必須保留／略過、AI/Human 意見不同、長影片、人物、動物、Reaction。提供「檢查 AI 建議略過的素材」：AI LOW/LIKELY_SKIP + Human 尚未審查。所有篩選名稱以繁中顯示，預設依拍攝時間排序。
 
 ## Stage 1 Handoff
-Stage 1 必須讀 `master_footage_review.json`。Human Candidate 不得因 AI LOW 被略過；Important 若排除需 `exclusion_reason`；Must Keep 原則必留。Human Review 是額外 evidence，不得改寫 Stage 0 原始 visual/event/metadata。
+Stage 1 必須讀 `master_footage_review.json`。`summary_feedback` 作為可追溯的 Human context／事實修正，不能單獨提高入選優先級；只有明確的 `human_review.status` 才表示選片意願。Human Candidate 不得因 AI LOW 被略過；Important 若排除需 `exclusion_reason`；Must Review 必須重看原片；Must Keep 原則必留。Human Review 是額外 evidence，不得覆寫 Stage 0 原始 visual/event/metadata；若 Human 修正與像素證據衝突，Stage 1 必須列為 conflict 並重看原片。
 
 ## 輸出
 `stage0d_master_review/` 至少包含：
@@ -99,9 +110,9 @@ Stage 1 必須讀 `master_footage_review.json`。Human Candidate 不得因 AI LO
 ## Validation
 Metadata Source Clip Count = Master Review Clip Count；所有 Clip 有 Hero；長片有 Contact Strip；所有 AI Recommendation 有具體 reason；Human Review save/persistence 測試 PASS；Proxy time mapping 1:1；Stage 0 原始資料未改。任何原片漏列 overall=FAIL。
 
-另外確認：若使用 `examples/` 範例程式，已依當前專案 schema/path 調整且沒有把 Stage 1 變成必要前置條件；Human Review reload 後仍存在；Console 的 frame/play seek 對應實際 source time。
+另外確認：若使用 `examples/` 範例程式，已依當前專案 schema/path 調整且沒有把 Stage 1 變成必要前置條件；Human Review reload 後仍存在；Console 的 frame/play seek 對應實際 source time；摘要回饋與選片意願可分別 Autosave/reload，且只填摘要不會改變選片狀態。
 
-HTML 語言驗收：確認 `lang=zh-TW`、UTF-8，以及所有介面文字與每支影片的 AI 摘要／理由均符合上述繁中顯示規則；不得只翻譯標題而留下英文評價。範例程式的英文預設理由也須提供繁中顯示版本。除上述原文與技術識別值例外，若有未中文化的顯示內容，overall=FAIL。
+HTML 語言驗收：確認 `lang=zh-TW`、UTF-8，以及所有介面文字、選項、篩選器與每支影片的 AI 摘要／理由均符合上述繁中顯示規則；不得只翻譯標題而留下英文 enum 或評價。逐一驗證所有固定 enum 的 value 保持機器代碼、顯示文字使用指定繁中標籤。範例程式的英文預設理由也須提供繁中顯示版本。除上述原文與技術識別值例外，若有未中文化的顯示內容，overall=FAIL。
 
 ## Autonomous Execution
 Stage 0 PASS 且 Original Media 可用就直接執行，不要問 Hero 怎麼選、Proxy 要不要做、要不要開始。只有真正 blocking issue 才停止。

@@ -5,6 +5,31 @@
 ## 輸入
 自動尋找 `stage0a_output/` 的 `metadata_catalog.json`、`local_visual_candidates.json`、`stage0b_review_queue.json`、`transcript_summary.txt`，以及原始影片/抽幀。若已有 Stage 0B 先前結果，保留 provenance 並只補未完成區段。
 
+## VLM Resource Budget
+執行前建立 `resource_budget`，依使用者指定值、可用硬體與 VLM runtime 能力設定：
+
+- `memory_limit_gb`：允許的 RAM／Unified Memory 上限；未指定或 runtime 無法限制時為 `null`。
+- `limit_mode`：`hard`、`advisory` 或 `unavailable`。只有容器、process supervisor 或 runtime 確實支援上限時才可標 `hard`。
+- `max_parallel_jobs`：預設 `1`。
+- `max_frames_per_request`：預設 `6`，一般維持 `4–8` 張範圍；需要判斷連續動作時可分成多個有重疊的小批次。
+- `max_image_edge_px`：預設 `1280`；必須保留長寬比，不得為省記憶體拉伸影像。
+- `context_tokens`：預設 `4096`；只有硬體餘裕或任務確實需要時才提高到 `8192` 以上。
+- `batch_size`、`gpu_layers`、`quantization`、`model_keep_alive`：runtime 支援時才填；不支援則為 `null`，不得假裝已生效。
+- `checkpoint_every_regions`：預設 `1`，每完成一個 region 就以安全寫入方式保存正式進度。
+- `oom_retry_limit`：預設 `3`。
+
+上述數值是保守起始配置，不是畫面 Coverage 上限。RAM 不足時應增加 request 數量，而不是刪除必要時間點。macOS Unified Memory、一般本機程序或部分 VLM server 未必能提供可靠的硬上限；此時以降低並行、圖片尺寸、每批影格、context／batch、選用較小量化模型及任務結束後卸載模型來控制用量，並將 `limit_mode` 如實記為 `advisory` 或 `unavailable`。若使用 Docker／容器或 supervisor 設定硬上限，超限可能直接終止程序，因此 checkpoint 不得只留在記憶體。
+
+### OOM／記憶體壓力降載順序
+遇到 OOM、swap 壓力、runtime 被終止或可觀察記憶體逼近上限時，保留已完成 checkpoint，對尚未完成的同一 region 依序重試：
+
+1. 將 `max_frames_per_request` 減半，最低 `1`，以重疊批次保持時間連續性。
+2. 將最長邊由 `1280` 降至 `960`，必要時再降至 `720`；可讀文字、微小物件或細微表情不足時須標 coverage gap，不得硬判。
+3. 降低 runtime batch／context，但 context 不足以容納指令、影格描述和結構化輸出時不得繼續宣告成功。
+4. 若已有相容且獲准的較小／量化 VLM，可切換並記錄完整 model provenance；不得在未記錄時偷偷換模型。
+
+超過 `oom_retry_limit` 仍失敗時，該 region 標 `RESOURCE_BLOCKED`，保存最後有效 checkpoint、失敗層級與未完成 queue；Stage 0B overall=FAIL。不得跳過該 region、縮減必要 Coverage 後假報 PASS，或因資源限制把「未看見」寫成「不存在」。
+
 ## 必做工作
 1. 對 review queue 逐區段觀看實際畫面，長區段至少覆蓋前/中/後，必要時增加時間點。
 2. 產生 `visual_summary`：只描述畫面實際看到的內容。
@@ -48,16 +73,19 @@ Hero Scene 候選只提高後續複核優先級，不得成為唯一素材來源
 - `ai_visual_review.json`
 - `hero_scene_candidates.json`
 - `ai_visual_review_summary.txt`
+- `stage0b_resource_log.json`
 - `stage0b_validation_report.json`
 
 每個 review region 至少包含：`region_id`、`source_file`、`start`、`end`、`sample_times`、`visual_summary`、`visual_people`、`visual_animals`、`visual_objects`、`visual_actions`、`reaction`、`visual_role_candidates`、`dominant_tone`、`light_level`、`composition_anchor`、`camera_movement`、`movement_direction`、`visual_motif_candidates`、`action_coverage`、`quality`、`confidence`、`provenance`。
+
+`stage0b_resource_log.json` 至少保存：`resource_budget`、VLM/runtime/model/quantization、實際並行數、每次 request 的 region/batch/frame count/image size/context、checkpoint 路徑、retry reason、降載層級、OOM／termination 紀錄，以及可取得時的 `peak_ram_gb`、`peak_vram_gb` 或 `peak_unified_memory_gb`。無法測量的數值填 `unknown`，不可填 `0`。
 
 ## Validation
 另檢查重要小動作是否有連續時間證據、加密理由與未解決覆蓋缺口；重要 queue item 未實際複核卻標完成為 FAIL。若有使用者提供的漏辨識案例，逐例回查原片並記錄發現/未發現/不確定，不能只回報抽幀總數。
 
 Hero Scene 驗收須確認：每個 VLM 候選都有 Agent 複核狀態；`reviewed_media/reviewed_times` 可追溯；CONFIRMED 有實際視覺證據及完整前後文；只讀摘要、只看單張圖卻判斷動態事件、或 VLM 提名後直接視為正式入選，overall=FAIL。沒有符合條件的 Hero Scene 可以是合法結果，但必須記錄已檢查範圍，不得為湊數硬選。
 
-確認所有 queue items 都有 review status；所有 final visual label 與視覺剪輯屬性都有像素依據；visual/audio 分離；長 region 有 temporal coverage；素材角色未被誤當入選決定；duplicate generic summaries 不得大量出現；若 runtime 沒有真正 Vision 能力，`visual_semantic_status=UNAVAILABLE` 且 overall=FAIL，禁止用 transcript/GPS 偽造 PASS。
+確認所有 queue items 都有 review status；所有 final visual label 與視覺剪輯屬性都有像素依據；visual/audio 分離；長 region 有 temporal coverage；素材角色未被誤當入選決定；duplicate generic summaries 不得大量出現；另驗證 `resource_budget_declared`、`limit_mode_truthful`、`checkpoint_complete`、`resource_retries_traceable`、`no_resource_based_coverage_loss`。任何 `RESOURCE_BLOCKED`、未完成 queue 或因降載導致的重要畫面無法判讀都不能 PASS。若 runtime 沒有真正 Vision 能力，`visual_semantic_status=UNAVAILABLE` 且 overall=FAIL，禁止用 transcript/GPS 偽造 PASS。
 
 ## 禁止事項
 不得做 Event Fusion、Story Planning、Event/Shot Selection、Cut Point、粗剪或調色。
@@ -65,7 +93,7 @@ Hero Scene 驗收須確認：每個 VLM 候選都有 Agent 複核狀態；`revie
 ## Autonomous Execution
 能看到畫面且輸入完整就直接執行，不要詢問是否開始。只有真正 Vision 不可用或 source media 無法讀取才阻擋。
 
-完成後只回報：Reviewed Region Count、Temporal Coverage、VLM Hero Candidate Count、Agent Confirmed/Rejected/Needs More Review Count、Overrides Count、Unknown Count、Hard Unusable Count、Duplicate Summary Check、Validation Overall、輸出路徑與 Warnings。
+完成後只回報：Reviewed Region Count、Temporal Coverage、Resource Limit/Mode、Model/Quantization、Peak Memory（可取得時）、OOM Retry/Resource Blocked Count、VLM Hero Candidate Count、Agent Confirmed/Rejected/Needs More Review Count、Overrides Count、Unknown Count、Hard Unusable Count、Duplicate Summary Check、Validation Overall、輸出路徑與 Warnings。
 
 ## Repository Data Structure / Path Mapping
 執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。

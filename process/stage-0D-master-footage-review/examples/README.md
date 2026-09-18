@@ -16,3 +16,5 @@ python3 tools/build_stage0d.py
 python3 tools/app.py
 ```
 接著前往 http://localhost:8080，全新的審片主控台就準備好了！
+
+介面以台灣繁體中文顯示，並將「補充／修正摘要」與「選片意願」分開。只填摘要時會保存為「不指定是否選用」，不會自動列為候選或必須保留；JSON 仍使用穩定的英文 enum，供後續 Stage 1 讀取。

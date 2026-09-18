@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stage 0D｜全素材審片</title>
+  <style>
+    :root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #111827; color: #f3f4f6; }
+    header { position: sticky; top: 0; z-index: 10; padding: 16px 20px; background: rgba(17,24,39,.96); border-bottom: 1px solid #374151; }
+    h1 { margin: 0 0 12px; font-size: 22px; }
+    .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    select, textarea, input { box-sizing: border-box; border: 1px solid #4b5563; border-radius: 8px; background: #1f2937; color: #f9fafb; padding: 9px; }
+    main { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .card { display: grid; grid-template-columns: minmax(280px, 420px) 1fr; gap: 18px; margin-bottom: 18px; padding: 16px; background: #1f2937; border: 1px solid #374151; border-radius: 14px; }
+    .hero { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: #0b1020; border-radius: 10px; }
+    .strip { display: flex; gap: 6px; margin-top: 8px; overflow-x: auto; }
+    .strip img { width: 116px; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; }
+    .meta, .hint, .save-state { color: #9ca3af; font-size: 13px; }
+    .summary { white-space: pre-wrap; line-height: 1.55; }
+    .badges { display: flex; gap: 7px; flex-wrap: wrap; margin: 8px 0; }
+    .badge { padding: 4px 8px; border-radius: 999px; background: #374151; font-size: 12px; }
+    .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #374151; }
+    .field { display: grid; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    textarea { width: 100%; min-height: 82px; resize: vertical; }
+    .empty { padding: 36px; text-align: center; color: #9ca3af; }
+    @media (max-width: 850px) { .card { grid-template-columns: 1fr; } .review-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Stage 0D｜全素材審片</h1>
+    <div class="toolbar">
+      <label for="filter">篩選：</label>
+      <select id="filter">
+        <option value="ALL">全部素材</option>
+        <option value="NOT_REVIEWED">尚未審查</option>
+        <option value="NO_PREFERENCE">不指定是否選用</option>
+        <option value="CANDIDATE">列為候選</option>
+        <option value="IMPORTANT">重要素材</option>
+        <option value="MUST_REVIEW">必須再看</option>
+        <option value="MUST_KEEP">必須保留</option>
+        <option value="SKIP">略過</option>
+        <option value="AI_STRONG">AI 強烈推薦</option>
+        <option value="AI_SKIP">AI 建議可能略過</option>
+      </select>
+      <span id="count" class="meta"></span>
+    </div>
+  </header>
+  <main id="clips"><div class="empty">正在載入審片資料……</div></main>
+
+  <script>
+    const LABELS = {
+      recommendation: {
+        STRONG_CANDIDATE: '強烈推薦', CANDIDATE: '建議考慮', OPTIONAL: '可選素材',
+        LIKELY_SKIP: '可能略過', TECHNICAL_REJECT: '技術不合格'
+      },
+      priority: { HIGH: '高', MEDIUM: '中', LOW: '低' },
+      status: {
+        NOT_REVIEWED: '尚未審查', NO_PREFERENCE: '不指定是否選用', CANDIDATE: '列為候選',
+        IMPORTANT: '重要素材', MUST_REVIEW: '必須再看', MUST_KEEP: '必須保留', SKIP: '略過'
+      },
+      action: { NONE: '不修改', APPEND: '補充內容', CORRECT: '修正錯誤', REPLACE: '改寫摘要' }
+    };
+
+    let allClips = [];
+    const timers = new Map();
+    const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const options = (map, selected) => Object.entries(map).map(([value, label]) =>
+      `<option value="${value}"${value === selected ? ' selected' : ''}>${label}</option>`).join('');
+    const listText = value => Array.isArray(value) && value.length ? value.join('、') : '無';
+
+    function matches(clip, filter) {
+      const status = clip.human_review?.status || 'NOT_REVIEWED';
+      const rec = clip.ai_review?.recommendation;
+      if (filter === 'ALL') return true;
+      if (filter === 'AI_STRONG') return rec === 'STRONG_CANDIDATE';
+      if (filter === 'AI_SKIP') return rec === 'LIKELY_SKIP' || rec === 'TECHNICAL_REJECT';
+      return status === filter;
+    }
+
+    function cardHtml(clip) {
+      const human = clip.human_review || {};
+      const feedback = human.summary_feedback || {};
+      const rec = clip.ai_review?.recommendation || 'OPTIONAL';
+      const priority = clip.ai_review?.priority || 'LOW';
+      const contact = (clip.contact_strip || []).map(frame =>
+        `<img src="frames/${encodeURIComponent(frame.img)}" alt="${esc(frame.ts)} 秒影格" loading="lazy">`).join('');
+      return `<article class="card" data-id="${esc(clip.clip_id)}">
+        <section>
+          <img class="hero" src="frames/${encodeURIComponent(clip.hero_frame)}" alt="代表影格" loading="lazy">
+          <div class="strip">${contact}</div>
+        </section>
+        <section>
+          <h2>${esc(clip.filename)}</h2>
+          <div class="meta">片段 ID：${esc(clip.clip_id)}｜長度：${Number(clip.duration || 0).toFixed(1)} 秒</div>
+          <div class="badges">
+            <span class="badge">AI：${esc(LABELS.recommendation[rec] || rec)}</span>
+            <span class="badge">優先級：${esc(LABELS.priority[priority] || priority)}</span>
+            <span class="badge">人工：${esc(LABELS.status[human.status || 'NOT_REVIEWED'])}</span>
+          </div>
+          <h3>AI 畫面摘要</h3>
+          <div class="summary">${esc(clip.visual_summary || '沒有摘要')}</div>
+          <p><strong>AI 理由：</strong>${esc(clip.ai_review?.reason || '沒有提供')}</p>
+          <p class="meta">動作：${esc(listText(clip.visual_actions))}｜物件：${esc(listText(clip.visual_objects))}</p>
+          <div class="review-grid">
+            <label class="field"><span>摘要回饋</span>
+              <select class="summary-action">${options(LABELS.action, feedback.action || 'NONE')}</select>
+            </label>
+            <label class="field"><span>選片意願</span>
+              <select class="review-status">${options(LABELS.status, human.status || 'NOT_REVIEWED')}</select>
+            </label>
+            <label class="field full"><span>補充或修正內容</span>
+              <textarea class="summary-text" placeholder="只補充內容不代表要選用；未指定選片意願時會保存為「不指定是否選用」。">${esc(feedback.text || '')}</textarea>
+            </label>
+            <label class="field full"><span>選片理由（只有選片意願需要時才填）</span>
+              <textarea class="review-reason" placeholder="例如：這是唯一拍到完整反應的素材。">${esc(human.reason || '')}</textarea>
+            </label>
+            <div class="field full"><span class="hint">摘要回饋與選片意願分開保存，補充摘要不會自動變成候選或必須保留。</span><span class="save-state">尚未修改</span></div>
+          </div>
+        </section>
+      </article>`;
+    }
+
+    function bindCard(card) {
+      card.querySelectorAll('select, textarea').forEach(control => control.addEventListener('input', () => scheduleSave(card)));
+      card.querySelectorAll('select').forEach(control => control.addEventListener('change', () => scheduleSave(card)));
+    }
+
+    function scheduleSave(card) {
+      const id = card.dataset.id;
+      card.querySelector('.save-state').textContent = '等待儲存……';
+      clearTimeout(timers.get(id));
+      timers.set(id, setTimeout(() => saveCard(card), 600));
+    }
+
+    async function saveCard(card) {
+      const action = card.querySelector('.summary-action').value;
+      const text = card.querySelector('.summary-text').value.trim();
+      let status = card.querySelector('.review-status').value;
+      if ((action !== 'NONE' || text) && status === 'NOT_REVIEWED') {
+        status = 'NO_PREFERENCE';
+        card.querySelector('.review-status').value = status;
+      }
+      const state = card.querySelector('.save-state');
+      state.textContent = '儲存中……';
+      try {
+        const response = await fetch('/api/save', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            clip_id: card.dataset.id,
+            status,
+            reason: card.querySelector('.review-reason').value,
+            summary_feedback: {
+              action, text, target_fields: ['visual_summary'], affects_selection: false,
+              updated_at: new Date().toISOString()
+            }
+          })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        state.textContent = '已儲存';
+      } catch (error) {
+        state.textContent = `儲存失敗：${error.message}`;
+      }
+    }
+
+    function render() {
+      const filter = document.getElementById('filter').value;
+      const clips = allClips.filter(clip => matches(clip, filter));
+      document.getElementById('count').textContent = `顯示 ${clips.length}／${allClips.length} 支影片`;
+      const root = document.getElementById('clips');
+      root.innerHTML = clips.length ? clips.map(cardHtml).join('') : '<div class="empty">沒有符合條件的素材。</div>';
+      root.querySelectorAll('.card').forEach(bindCard);
+    }
+
+    document.getElementById('filter').addEventListener('change', render);
+    fetch('/api/data').then(response => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    }).then(data => { allClips = data; render(); })
+      .catch(error => { document.getElementById('clips').innerHTML = `<div class="empty">載入失敗：${esc(error.message)}</div>`; });
+  </script>
+</body>
+</html>

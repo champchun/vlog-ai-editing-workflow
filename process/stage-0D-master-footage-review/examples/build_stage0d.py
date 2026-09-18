@@ -105,19 +105,19 @@ for c in catalog:
     
     rec = "LIKELY_SKIP"
     pri = "LOW"
-    reason = "Low interaction/visual values. No strong events detected."
+    reason = "互動與視覺價值較低，未偵測到明確的重要事件。"
     if ai_score > 0.8 or mc['event_ids']:
         rec = "STRONG_CANDIDATE"
         pri = "HIGH"
-        reason = "High visual/reaction value or part of a major event. Strong candidate for selection."
+        reason = "具有較高的視覺或反應價值，或屬於主要事件，建議優先檢視。"
     elif ai_score > 0.6:
         rec = "CANDIDATE"
         pri = "MEDIUM"
-        reason = "Good visual elements detected. Could serve as coverage."
+        reason = "具有可用的視覺元素，可作為場景補充素材候選。"
     elif ai_score > 0.4:
         rec = "OPTIONAL"
         pri = "LOW"
-        reason = "Average visual value. Might be useful as B-roll if needed."
+        reason = "視覺價值普通，故事需要時可作為 B-roll。"
         
     mc['ai_review'] = {
         "recommendation": rec,
@@ -127,7 +127,14 @@ for c in catalog:
     
     mc['human_review'] = {
         "status": "NOT_REVIEWED",
-        "reason": ""
+        "reason": "",
+        "summary_feedback": {
+            "action": "NONE",
+            "text": "",
+            "target_fields": [],
+            "affects_selection": False,
+            "updated_at": None
+        }
     }
     mc['review_relationship'] = "HUMAN_NOT_REVIEWED"
     
@@ -174,7 +181,7 @@ for job in proxy_jobs:
     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 # 4. Generate master JSON
-with open(os.path.join(out_dir, 'master_footage_review.json'), 'w') as f:
+with open(os.path.join(out_dir, 'master_footage_review.json'), 'w', encoding='utf-8') as f:
     json.dump(master_clips, f, indent=2, ensure_ascii=False)
 
 # 5. Copy HTML (Do NOT copy app.py since it should run from the root/kit location)
