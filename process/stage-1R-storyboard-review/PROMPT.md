@@ -69,8 +69,8 @@ Stage 1 PASS 且 Original Media 可讀就直接產 Storyboard，不要問要不�
 ## Repository Data Structure / Path Mapping
 執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
 - Stage 1 正式輸入：`process/workspace/project-output/stage1_output/`
-- Original Video：`process/workspace/videos/`（所有 Storyboard frames 必須從這裡的 Original Source 抽取）
-- Original Photos：`process/workspace/photos/`（若 Stage 1 明確納入 photo item，可建立對應靜態 QA；不得用照片替代影片 Shot frame）
+- Original Video：`process/workspace/media/`（所有 Storyboard frames 必須從這裡的 Original Source 抽取）
+- Original Photos：`process/workspace/media/`（若 Stage 1 明確納入 photo item，可建立對應靜態 QA；不得用照片替代影片 Shot frame）
 - GPS / Timeline：`process/workspace/gps/`（僅作 context，不改寫 edit_decisions）
 - 本階段正式輸出根：`process/workspace/project-output/stage1_review/`
 - Storyboard 正式路徑：`process/workspace/project-output/stage1_review/storyboard/`

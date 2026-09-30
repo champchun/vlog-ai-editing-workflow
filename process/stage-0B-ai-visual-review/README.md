@@ -52,8 +52,8 @@ OLLAMA_NUM_PARALLEL=1 OLLAMA_MAX_LOADED_MODELS=1 ollama serve
 ## Repo 資料結構
 執行前讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
 - Stage 0A 輸入：`process/workspace/project-output/stage0a_output/`
-- 原始影片：`process/workspace/videos/`
-- 原始照片：`process/workspace/photos/`
+- 原始影片：`process/workspace/media/`
+- 原始照片：`process/workspace/media/`
 - GPS/Timeline：`process/workspace/gps/`
 - 正式輸出：`process/workspace/project-output/stage0b_output/`
 - 暫存抽幀/cache：`process/workspace/temp/`

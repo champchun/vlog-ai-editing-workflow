@@ -122,11 +122,11 @@ Stage 0 PASS 且 Original Media 可用就直接執行，不要問 Hero 怎麼選
 ## Repository Data Structure / Path Mapping
 執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
 - Stage 0 正式輸入：`process/workspace/project-output/stage0c_output/`
-- Original Video：`process/workspace/videos/`
-- Original Photos：`process/workspace/photos/`（可作 Scene context / EXIF 輔助，但 **不列入 Master Source Video Clip Count**）
+- Original Video：`process/workspace/media/`
+- Original Photos：`process/workspace/media/`（可作 Scene context / EXIF 輔助，但 **不列入 Master Source Video Clip Count**）
 - GPS / Timeline：`process/workspace/gps/`（auxiliary evidence）
 - 本階段正式輸出：`process/workspace/project-output/stage0d_master_review/`
 - Review proxy / frame cache 暫存可放：`process/workspace/temp/`；若為 Stage 0D 正式 Console 資產，仍保存在 `stage0d_master_review/` 對應子目錄
 - 可重用實作範例：`process/stage-0D-master-footage-review/examples/`
 
-本 Prompt 內 `stage0d_master_review/` 在 Repo 模式映射為 `process/workspace/project-output/stage0d_master_review/`。Master 的基本單位仍是 `workspace/videos/` 中的 Source Video Clip；照片不得混入 Source Video Clip Count。若資料可自動發現，不要要求使用者重複提供路徑。
+本 Prompt 內 `stage0d_master_review/` 在 Repo 模式映射為 `process/workspace/project-output/stage0d_master_review/`。Master 的基本單位仍是 `workspace/media/` 中的 Source Video Clip；照片不得混入 Source Video Clip Count。若資料可自動發現，不要要求使用者重複提供路徑。

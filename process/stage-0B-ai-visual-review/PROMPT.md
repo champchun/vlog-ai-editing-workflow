@@ -107,8 +107,8 @@ Hero Scene 驗收須確認：每個 VLM 候選都有 Agent 複核狀態；`revie
 ## Repository Data Structure / Path Mapping
 執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
 - Stage 0A 正式輸入：`process/workspace/project-output/stage0a_output/`
-- Original Video：`process/workspace/videos/`
-- Original Photos：`process/workspace/photos/`（可作獨立靜態視覺/EXIF 輔助，但不得替代影片 pixel review）
+- Original Video：`process/workspace/media/`
+- Original Photos：`process/workspace/media/`（可作獨立靜態視覺/EXIF 輔助，但不得替代影片 pixel review）
 - GPS / Timeline：`process/workspace/gps/`（只能作同日/同時段 auxiliary evidence）
 - 本階段正式輸出：`process/workspace/project-output/stage0b_output/`
 - 暫存抽幀/cache：`process/workspace/temp/`

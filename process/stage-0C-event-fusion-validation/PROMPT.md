@@ -64,8 +64,8 @@ Event 可新增 `hero_scene_assessment`：`candidate_id`、`agent_status`、`her
 執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
 - Stage 0A 輸入：`process/workspace/project-output/stage0a_output/`
 - Stage 0B 輸入：`process/workspace/project-output/stage0b_output/`
-- Original Video：`process/workspace/videos/`
-- Original Photos：`process/workspace/photos/`（可作 EXIF/時間/場景輔助來源，需保留 provenance）
+- Original Video：`process/workspace/media/`
+- Original Photos：`process/workspace/media/`（可作 EXIF/時間/場景輔助來源，需保留 provenance）
 - GPS / Timeline：`process/workspace/gps/`（正式具名地點的重要 auxiliary source；日期與時間為硬限制）
 - 本階段正式輸出：`process/workspace/project-output/stage0c_output/`
 - 暫存：`process/workspace/temp/`

@@ -113,8 +113,8 @@ Stage 0/0D 輸入完整就直接執行；不要詢問是否開始或要不要採
 執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
 - Stage 0 正式資料：`process/workspace/project-output/stage0c_output/`
 - Stage 0D Human/Master Review：`process/workspace/project-output/stage0d_master_review/`
-- Original Video：`process/workspace/videos/`（Cut Point bounded review 與後續正式 source 的唯一影片來源）
-- Original Photos：`process/workspace/photos/`（可作 Scene Coverage / montage / insert 候選；若正式納入故事，必須明確標示 media_type=photo，不得假裝為 video shot）
+- Original Video：`process/workspace/media/`（Cut Point bounded review 與後續正式 source 的唯一影片來源）
+- Original Photos：`process/workspace/media/`（可作 Scene Coverage / montage / insert 候選；若正式納入故事，必須明確標示 media_type=photo，不得假裝為 video shot）
 - GPS / Timeline：`process/workspace/gps/`（可輔助 Scene/location context，但不得重新推翻 Stage 0 provenance）
 - 本階段正式輸出：`process/workspace/project-output/stage1_output/`
 - 暫存：`process/workspace/temp/`

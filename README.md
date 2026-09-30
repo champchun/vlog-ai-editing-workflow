@@ -17,8 +17,7 @@ Stage 0A Local Pre-analysis → Stage 0B AI Visual Review → Stage 0C Event Fus
 ## AI Agent Workspace
 
 `process/workspace/`：
-- `videos/`：Original Video Media
-- `photos/`：Original Photos
+- `media/`：Original Videos & Photos（影片與照片共用入口，以 media_type 區分）
 - `gps/`：GPS / Google Maps Timeline / GPX / KML / GeoJSON / CSV 等
 - `project-output/`：各 Stage 正式輸出
 - `temp/`：可重建暫存、proxy、frame cache、中間檔
@@ -82,8 +81,7 @@ ffmpeg -version
 ### 3. 放置專案素材
 
 ```text
-process/workspace/videos/          Original Video Media
-process/workspace/photos/          Original Photos
+process/workspace/media/           Original Videos & Photos
 process/workspace/gps/             GPS / Timeline / 地點輔助資料
 process/workspace/project-output/  各 Stage 正式輸出
 process/workspace/temp/            可重建 proxy、frames、cache 與中間檔

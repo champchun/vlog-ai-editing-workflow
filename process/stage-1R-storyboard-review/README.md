@@ -16,8 +16,8 @@ Stage 1R = 防選錯。FAIL 時回 Stage 1 修正，Stage 1R 本身不得修改 
 ## Repo 資料結構
 執行前讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
 - Stage 1：`process/workspace/project-output/stage1_output/`
-- 原始影片：`process/workspace/videos/`
-- 原始照片：`process/workspace/photos/`
+- 原始影片：`process/workspace/media/`
+- 原始照片：`process/workspace/media/`
 - 正式輸出：`process/workspace/project-output/stage1_review/storyboard/`
 - 暫存：`process/workspace/temp/`
 

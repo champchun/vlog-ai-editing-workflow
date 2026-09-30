@@ -18,14 +18,14 @@ Stage 0D = 防漏選；Human Review 與 AI Review 必須分開保存，並交給
 ## Repo 資料結構
 執行前讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
 - Stage 0 正式輸入：`process/workspace/project-output/stage0c_output/`
-- 原始影片：`process/workspace/videos/`
-- 原始照片：`process/workspace/photos/`（只作 context，不列入 Master Source Video Clip Count）
+- 原始影片：`process/workspace/media/`
+- 原始照片：`process/workspace/media/`（只作 context，不列入 Master Source Video Clip Count）
 - GPS/Timeline：`process/workspace/gps/`
 - 正式輸出：`process/workspace/project-output/stage0d_master_review/`
 - 可重用範例：`process/stage-0D-master-footage-review/examples/`
 - 暫存：`process/workspace/temp/`
 
-Master Review 的基本單位是 `workspace/videos/` 中的 Source Video Clip。Review proxy 只能審片，Stage 1/2/3 不得把 proxy 當正式來源。
+Master Review 的基本單位是 `workspace/media/` 中的 Source Video Clip。Review proxy 只能審片，Stage 1/2/3 不得把 proxy 當正式來源。
 全素材審片 HTML 強制使用台灣繁體中文（`zh-TW`），包含介面文字與每支影片的 AI 摘要、評價及推薦理由。JSON 欄位與狀態代碼保持原樣，原始逐字稿及人工輸入保留原文。通用 `review/` 驗收報告可使用英文；完整語言規則與驗收條件見 `PROMPT.md`。
 
 人工操作分成「補充／修正摘要」與「選片意願」兩區。摘要操作顯示為「不修改、補充內容、修正錯誤、改寫摘要」；選片意願顯示為「尚未審查、不指定是否選用、列為候選、重要素材、必須再看、必須保留、略過」。介面使用繁中，JSON 仍保存 `NONE/APPEND/CORRECT/REPLACE` 與 `NOT_REVIEWED/NO_PREFERENCE/CANDIDATE/IMPORTANT/MUST_REVIEW/MUST_KEEP/SKIP`。只補充摘要時不得自動提高選片優先級。

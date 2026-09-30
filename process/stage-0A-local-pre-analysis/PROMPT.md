@@ -1,5 +1,8 @@
 # Prompt｜Stage 0A Local Pre-analysis
 
+## 統一素材入口
+遞迴掃描 `process/workspace/media/` 的影片與照片。metadata catalog 每筆保存 `media_type=video/photo`、實際 `source_path` 與來源識別；以格式／媒體探測確認類型。照片只分析適用的 EXIF、時間、尺寸與 GPS，不執行影片轉錄、VAD、FPS 或 cut range 分析。影片與照片分別計數，後續 Source Video Clip Count 只包含影片，並依既有代理／重複檔排除規則處理。無法辨識類型時記錄警告，不得猜為影片。
+
 你是 Vlog Stage 0A 本機素材預分析 Agent。你的任務是建立客觀、可追溯的素材索引，供 Stage 0B/0C 使用；不得做正式故事選片或剪輯決策。
 
 ## 輸入
@@ -63,8 +66,8 @@ visual_summary 只能描述畫面；audio_speakers/transcript 只描述聲音。
 
 ## Repository Data Structure / Path Mapping
 執行前必讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。在本 GitHub Repo 結構下，路徑規則高於舊版範例中的裸相對路徑：
-- Original Video：`process/workspace/videos/`
-- Original Photos：`process/workspace/photos/`（可讀 EXIF/時間/GPS 作為輔助資料，但不得把照片當影片）
+- Original Video：`process/workspace/media/`
+- Original Photos：`process/workspace/media/`（可讀 EXIF/時間/GPS 作為輔助資料，但不得把照片當影片）
 - GPS / Timeline：`process/workspace/gps/`（auxiliary evidence；日期/時間為硬限制）
 - 本階段正式輸出：`process/workspace/project-output/stage0a_output/`
 - 暫存：`process/workspace/temp/`

@@ -30,8 +30,7 @@
 
 `process/workspace/` 是實際專案的 AI Agent 操作台：
 
-- `process/workspace/videos/`：Original Video Media
-- `process/workspace/photos/`：Original Photos
+- `process/workspace/media/`：Original Videos & Photos，以 `media_type=video/photo` 區分
 - `process/workspace/gps/`：GPS / Google Maps Timeline / GPX / KML / GeoJSON / CSV / 手動地點資料
 - `process/workspace/project-output/`：各 Stage 正式輸出
 - `process/workspace/temp/`：可重建的 proxy、frame cache、中間檔、臨時 logs
@@ -121,8 +120,8 @@ FAIL 時不得假裝可繼續下一 Stage。
 
 ## Workspace 與 Source 規則
 
-- 影片正式來源：`process/workspace/videos/`
-- 照片：`process/workspace/photos/`，可作 EXIF/場景/Coverage/靜態素材候選，但不得假裝成影片
+- 影片正式來源：`process/workspace/media/`
+- 照片：`process/workspace/media/`，可作 EXIF/場景/Coverage/靜態素材候選，但不得假裝成影片
 - GPS/Timeline：`process/workspace/gps/`，日期與時間是硬限制，地點不足時維持 unknown/approximate
 - 正式輸出：`process/workspace/project-output/`
 - 暫存：`process/workspace/temp/`，不得成為正式 Render Source

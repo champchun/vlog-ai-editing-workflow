@@ -16,8 +16,8 @@
 
 ## Repo 資料結構
 執行前讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。
-- 原始影片：`process/workspace/videos/`
-- 原始照片：`process/workspace/photos/`
+- 原始影片：`process/workspace/media/`
+- 原始照片：`process/workspace/media/`
 - GPS/Timeline：`process/workspace/gps/`
 - 正式輸出：`process/workspace/project-output/stage0a_output/`
 - 暫存：`process/workspace/temp/`

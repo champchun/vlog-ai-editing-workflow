@@ -139,12 +139,12 @@ Validation 至少：`stage1_validation`、`stage2_validation`、`original_source
 - Stage 1 approved decisions：`process/workspace/project-output/stage1_output/`
 - Storyboard Gate：`process/workspace/project-output/stage1_review/`
 - Stage 2 Rough Cut / logs：`process/workspace/project-output/stage2_output/`
-- Original Video：`process/workspace/videos/`（Final 必須從此處 Original Source rebuild）
-- Original Photos：`process/workspace/photos/`（只有 approved timeline 明確包含 photo item 時才可納入）
+- Original Video：`process/workspace/media/`（Final 必須從此處 Original Source rebuild）
+- Original Photos：`process/workspace/media/`（只有 approved timeline 明確包含 photo item 時才可納入）
 - GPS / Timeline：`process/workspace/gps/`（Location Card 可查此處，但必須遵守 evidence safety）
 - Stage 3 專屬 BGM：`process/stage-3-final-color-mix/assets/bgm/`
 - Stage 3 專屬 LUT：`process/stage-3-final-color-mix/assets/lut/`
 - 本階段正式輸出：`process/workspace/project-output/stage3_output/`
 - 暫存：`process/workspace/temp/`
 
-本 Prompt 內 `stage3_output/` 在 Repo 模式映射為 `process/workspace/project-output/stage3_output/`。Stage 3 專屬 BGM/LUT 不搬到 workspace；它們跟著 Stage 3 存放。Rough Cut 只作 reference，Final Source 必須回到 `workspace/videos/`。若上述資源可自動發現，不要要求使用者重複提供路徑。
+本 Prompt 內 `stage3_output/` 在 Repo 模式映射為 `process/workspace/project-output/stage3_output/`。Stage 3 專屬 BGM/LUT 不搬到 workspace；它們跟著 Stage 3 存放。Rough Cut 只作 reference，Final Source 必須回到 `workspace/media/`。若上述資源可自動發現，不要要求使用者重複提供路徑。

@@ -19,5 +19,5 @@ Reviewer 的工作不是重做整個 Stage，而是判斷是否符合正式規�
 ## Reviewer 不應使用的來源
 - 不要把 `process/workspace/temp/` 的暫存結果當正式產物
 - 不要把 Stage 0D proxy、Storyboard JPG 或 rough cut 當 Original Source
-- 驗收影片 source 時，正式 Original Video 位於 `process/workspace/videos/`
-- GPS/照片若涉及驗收，分別讀 `process/workspace/gps/` 與 `process/workspace/photos/`，並遵守對應 Stage Prompt 的證據限制
+- 驗收影片 source 時，正式 Original Video 位於 `process/workspace/media/`
+- GPS/照片若涉及驗收，分別讀 `process/workspace/gps/` 與 `process/workspace/media/`，並遵守對應 Stage Prompt 的證據限制

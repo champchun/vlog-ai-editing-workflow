@@ -38,8 +38,8 @@ Stage 3 只做 finishing，不重新做導演或剪輯決策；Rough Cut 只能�
 - Stage 1：`process/workspace/project-output/stage1_output/`
 - Storyboard Gate：`process/workspace/project-output/stage1_review/`
 - Stage 2：`process/workspace/project-output/stage2_output/`
-- 原始影片：`process/workspace/videos/`
-- 原始照片：`process/workspace/photos/`
+- 原始影片：`process/workspace/media/`
+- 原始照片：`process/workspace/media/`
 - GPS/Timeline：`process/workspace/gps/`
 - Stage 3 BGM：`process/stage-3-final-color-mix/assets/bgm/`
 - Stage 3 LUT：`process/stage-3-final-color-mix/assets/lut/`
