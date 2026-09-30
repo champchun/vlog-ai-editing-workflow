@@ -15,22 +15,37 @@
 必須真正看像素；不得用 Transcript/GPS 偽造視覺結論。不做 Event Fusion 或剪輯決策。
 
 ## 記憶體限制建議
-Stage 0B 透過 `resource_budget` 控制 VLM 負載。RAM 較有限的 Mac 可先使用：
+Stage 0B 透過 `resource_budget` 控制 VLM 負載。本專案使用 16 GB Mac + Ollama，預設配置為：
 
 ```json
 {
-  "memory_limit_gb": null,
+  "memory_limit_gb": 8,
   "limit_mode": "advisory",
   "max_parallel_jobs": 1,
-  "max_frames_per_request": 6,
-  "max_image_edge_px": 1280,
+  "max_frames_per_request": 2,
+  "max_image_edge_px": 960,
   "context_tokens": 4096,
   "checkpoint_every_regions": 1,
   "oom_retry_limit": 3
 }
 ```
 
-`memory_limit_gb=null` 代表目前沒有 runtime 可驗證的硬限制。若透過容器或 supervisor 確實限制記憶體，再填入實際 GB 並把 `limit_mode` 設為 `hard`。Ollama、llama.cpp 或其他 VLM 的 batch、GPU layers、量化與模型常駐參數依實際 runtime 設定，並記錄在 `stage0b_resource_log.json`；不要把未支援的參數寫成已生效。
+8 GB 是 VLM 工作負載的預算；`advisory` 表示不能保證瞬間用量永遠低於它。Prompt 不會自行改變 Mac 或 Ollama 設定。Agent 必須套用 runtime 參數，並在有可靠監控時停止超限後的新請求；没有監控時須明確記錄限制。
+
+若使用 macOS Ollama App，先在終端機執行以下設定，再完全結束並重新開啟 Ollama：
+
+```bash
+launchctl setenv OLLAMA_NUM_PARALLEL 1
+launchctl setenv OLLAMA_MAX_LOADED_MODELS 1
+```
+
+若使用終端機啟動 server，確認沒有另一個 Ollama server 後使用：
+
+```bash
+OLLAMA_NUM_PARALLEL=1 OLLAMA_MAX_LOADED_MODELS=1 ollama serve
+```
+
+每個 API request 設定 `options.num_ctx=4096`。Stage 完成或資源阻擋時，使用 `ollama stop <本次模型名稱>` 卸載本次模型。參數與卸載方式參考 [Ollama 官方 FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.mdx)。模型載入已超過 8 GB 時，改用已獲准的較小量化 VLM；只減少影格無法保證足夠。
 
 資源不足時先降低同時工作數、每批影格與圖片尺寸，再調低 batch/context 或使用已獲准的較小量化模型。每完成一個 region 就保存 checkpoint。降低資源只能改變分批方式，不能略過必要時間點；連續動作可拆成有重疊的小批次。超過重試次數仍失敗時應標 `RESOURCE_BLOCKED` 並讓 Stage 0B FAIL。
 

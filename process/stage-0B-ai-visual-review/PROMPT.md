@@ -8,7 +8,7 @@
 ## VLM Resource Budget
 執行前建立 `resource_budget`，依使用者指定值、可用硬體與 VLM runtime 能力設定：
 
-- `memory_limit_gb`：允許的 RAM／Unified Memory 上限；未指定或 runtime 無法限制時為 `null`。
+- `memory_limit_gb`：使用者指定的 RAM／Unified Memory 預算；未指定時為 `null`。是否能強制執行由 `limit_mode` 表示，不能因 runtime 不支援硬限制而丟掉預算。
 - `limit_mode`：`hard`、`advisory` 或 `unavailable`。只有容器、process supervisor 或 runtime 確實支援上限時才可標 `hard`。
 - `max_parallel_jobs`：預設 `1`。
 - `max_frames_per_request`：預設 `6`，一般維持 `4–8` 張範圍；需要判斷連續動作時可分成多個有重疊的小批次。
@@ -21,6 +21,15 @@
 上述數值是保守起始配置，不是畫面 Coverage 上限。RAM 不足時應增加 request 數量，而不是刪除必要時間點。macOS Unified Memory、一般本機程序或部分 VLM server 未必能提供可靠的硬上限；此時以降低並行、圖片尺寸、每批影格、context／batch、選用較小量化模型及任務結束後卸載模型來控制用量，並將 `limit_mode` 如實記為 `advisory` 或 `unavailable`。若使用 Docker／容器或 supervisor 設定硬上限，超限可能直接終止程序，因此 checkpoint 不得只留在記憶體。
 
 ### OOM／記憶體壓力降載順序
+
+### 本專案預設：16 GB Mac + Ollama
+此專案採 `memory_limit_gb=8`、`limit_mode=advisory`、`max_parallel_jobs=1`、`max_frames_per_request=2`、`max_image_edge_px=960`、`context_tokens=4096`。這是 Ollama/VLM 工作負載的預算，不包含其他應用程式，也不是 macOS 強制的 8 GB 硬上限。沒有實際監控／限制程式時，不得宣稱已自動阻止超限。
+
+Ollama server 設定 `OLLAMA_NUM_PARALLEL=1`、`OLLAMA_MAX_LOADED_MODELS=1`；API request 指定 `options.num_ctx=4096`，完成整個 Stage 或遇到資源阻擋時卸載本次模型。每次 request 前後記錄記憶體；若可取得整個 Ollama server/runner 的用量，達到或超過 8 GB 就停止派送新 request、保存進度、卸載本次模型並降載重試。不要僅以模型檔案大小或 `ollama ps` 的模型配置量當作整個程序記憶體。無法取得可靠用量時明列 `memory_monitoring=UNAVAILABLE`，只報告預算與已套用參數。
+
+模型載入本身已超過預算時，減少影格通常不足以解決；應使用已安裝且獲准的較小量化 VLM，否則標 `RESOURCE_BLOCKED`。不得以縮短必要抽樣或轉用文字模型代替 Vision。此配置從 960 降至 720，並保留原片／高解析補看細節的需求。
+
+### 降載執行
 遇到 OOM、swap 壓力、runtime 被終止或可觀察記憶體逼近上限時，保留已完成 checkpoint，對尚未完成的同一 region 依序重試：
 
 1. 將 `max_frames_per_request` 減半，最低 `1`，以重疊批次保持時間連續性。
