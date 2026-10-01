@@ -18,3 +18,11 @@
 3. GPS 是 auxiliary evidence，不可用語意猜測跨日期配對地點。
 4. 每個 Stage 開始前先讀本檔、`WORKSPACE_RULES.md`、該 Stage 的 README 與 `PROMPT.md`。
 5. 驗收工作由 repo 根目錄的 `review/` 負責；Process Agent 不得自行把 Human Gate 當成已通過。
+
+## 階段預算關卡與對話切分
+- 每個 Stage 開始前，先列出預估的 Claude token 範圍與選項；實際作業若會超出預估（新增複核回合、補聯絡表、重跑），先回報再繼續，不得自行加碼。
+- 大量逐張／逐片的工作優先交給本機模型（例如 Ollama VLM、faster-whisper），Claude 只複核被規則挑出的項目；影像盡量留在本機。
+- 建議每個 Stage 在新對話開始：規格與前階段成果都在 repo，不依賴聊天記憶；對話越長，每一步重送的 context 越貴。
+
+## 地點命名
+Timeline 匯出檔可能只有座標與 placeID、沒有名稱。Stage 0C 前須完成「地點命名」：由使用者逐地點確認，結果存 `workspace/gps/place_names.json`（`source=user_confirmed`）。見 Stage 0C 規格。

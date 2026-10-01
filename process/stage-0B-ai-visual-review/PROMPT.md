@@ -23,11 +23,11 @@
 ### OOM／記憶體壓力降載順序
 
 ### 本專案預設：16 GB Mac + Ollama
-此專案採 `memory_limit_gb=8`、`limit_mode=advisory`、`max_parallel_jobs=1`、`max_frames_per_request=2`、`max_image_edge_px=960`、`context_tokens=4096`。這是 Ollama/VLM 工作負載的預算，不包含其他應用程式，也不是 macOS 強制的 8 GB 硬上限。沒有實際監控／限制程式時，不得宣稱已自動阻止超限。
+此專案採 `memory_limit_gb=8`、`limit_mode=advisory`、`max_parallel_jobs=1`、`max_frames_per_request=1`、`max_image_edge_px=720`、`context_tokens=2048`。實測依據（qwen2.5vl:7b Q4_K_M、16 GB Mac）：`num_ctx=4096` 時系統 wired 記憶體增量約 7.7 GB，餘裕不足；一次送兩張圖時模型傾向把第一張的描述複製到第二張，因此預設一次一張。這是 Ollama/VLM 工作負載的預算，不包含其他應用程式，也不是 macOS 強制的 8 GB 硬上限。沒有實際監控／限制程式時，不得宣稱已自動阻止超限。
 
-Ollama server 設定 `OLLAMA_NUM_PARALLEL=1`、`OLLAMA_MAX_LOADED_MODELS=1`；API request 指定 `options.num_ctx=4096`，完成整個 Stage 或遇到資源阻擋時卸載本次模型。每次 request 前後記錄記憶體；若可取得整個 Ollama server/runner 的用量，達到或超過 8 GB 就停止派送新 request、保存進度、卸載本次模型並降載重試。不要僅以模型檔案大小或 `ollama ps` 的模型配置量當作整個程序記憶體。無法取得可靠用量時明列 `memory_monitoring=UNAVAILABLE`，只報告預算與已套用參數。
+Ollama server 設定 `OLLAMA_NUM_PARALLEL=1`、`OLLAMA_MAX_LOADED_MODELS=1`；API request 指定 `options.num_ctx=2048`，完成整個 Stage 或遇到資源阻擋時卸載本次模型。每次 request 前後記錄記憶體；若可取得整個 Ollama server/runner 的用量，達到或超過 8 GB 就停止派送新 request、保存進度、卸載本次模型並降載重試。不要僅以模型檔案大小或 `ollama ps` 的模型配置量當作整個程序記憶體。建議量測方式：模型卸載後取系統 wired 記憶體為基線，載入後的增量視為 VLM 用量（Metal 配置屬 wired；其他程式也會影響，須註明為近似值）；`footprint`／RSS 會嚴重低估，僅供參考。同時進行 4K 硬體解碼等工作會推高增量，不得與 VLM 並行。無法取得可靠用量時明列 `memory_monitoring=UNAVAILABLE`，只報告預算與已套用參數。
 
-模型載入本身已超過預算時，減少影格通常不足以解決；應使用已安裝且獲准的較小量化 VLM，否則標 `RESOURCE_BLOCKED`。不得以縮短必要抽樣或轉用文字模型代替 Vision。此配置從 960 降至 720，並保留原片／高解析補看細節的需求。
+模型載入本身已超過預算時，減少影格通常不足以解決；應使用已安裝且獲准的較小量化 VLM，否則標 `RESOURCE_BLOCKED`。不得以縮短必要抽樣或轉用文字模型代替 Vision。本專案預設已為 720 px；需要看小字或細節時，以原片／高解析單張補看並標 coverage gap，不得因此降低取樣。
 
 ### 降載執行
 遇到 OOM、swap 壓力、runtime 被終止或可觀察記憶體逼近上限時，保留已完成 checkpoint，對尚未完成的同一 region 依序重試：
@@ -68,6 +68,15 @@ Hero Scene 是可能承擔 Hook、高潮、payoff、情感核心或結尾的「�
 
 Hero Scene 候選只提高後續複核優先級，不得成為唯一素材來源，也不得讓未被提名的主要場景、Human Must Keep 或重要互動消失。Stage 0B 仍不做正式選片或故事排序。
 
+## VLM 可靠度校準與提名備援
+- 以單張請求為預設。每次完成後須做「VLM 校準抽查」：content-blind、依日期／影片分層隨機抽至少 5% 的影格，由 Agent 看原圖複核，記錄 verdict（correct／partially_correct／wrong）與錯誤欄位（人數、活動、動物、文字、環境）。
+- 若某欄位在校準或總體分布中系統性失效（例如 Hero 提名為 0、枚舉欄位全 unknown、標籤確認全部 yes），須在輸出的 `vlm_field_reliability` 標為 unusable，改用替代來源並如實記錄，不得沿用失效欄位當證據。
+- VLM 無法提供 Hero 提名時，可用多種獨立訊號疊加（至少 2 種，例如小孩＋未轉錄聲音活動、動物、動作詞、鏡頭轉向）產生 `agent_signals` 候選，`nominated_by` 與 VLM 提名分開標示；仍須由 Agent 看連續影格複核。複核有預算上限時，未複核候選必須列在輸出，不得無聲丟棄。
+- 不同複核者對同一活動結論衝突時，由主 Agent 看圖裁決，保留原判（`subagent_status`）與裁決理由。
+
+## 片內段落（長片多活動）
+家庭 Vlog 常在一支連續長片中拍多個活動（同地點換活動、或邊走邊拍多地點），畫面差異不一定大。≥60 秒的片須：取樣加密至約每 10 秒；以聯絡表（不得截斷，過長分頁）由 Agent 看圖確認活動／地點變化，輸出 `intra_clip_segments`（`segment_id`、`start`、`end`、`activity`、`source`）。演算法切點（色彩變化、VLM 活動文字差異）只作候選；實測 17 支長片中僅 2 支正確，主要誤切在鏡頭俯仰、手遮鏡頭、人走入畫面，漏切在同地點換活動。段落邊界精度約等於取樣間距。
+
 ## Quality Assessment
 評估 blur、shake、dark、overexposure、occlusion、framing、usable ratio；只有 nearly black、fully occluded、corrupt、no valid footage、unrecognizable 等才可 `hard_unusable`。畫質普通但有重要互動/reaction 不得直接排除。
 
@@ -95,6 +104,8 @@ Hero Scene 候選只提高後續複核優先級，不得成為唯一素材來源
 Hero Scene 驗收須確認：每個 VLM 候選都有 Agent 複核狀態；`reviewed_media/reviewed_times` 可追溯；CONFIRMED 有實際視覺證據及完整前後文；只讀摘要、只看單張圖卻判斷動態事件、或 VLM 提名後直接視為正式入選，overall=FAIL。沒有符合條件的 Hero Scene 可以是合法結果，但必須記錄已檢查範圍，不得為湊數硬選。
 
 確認所有 queue items 都有 review status；所有 final visual label 與視覺剪輯屬性都有像素依據；visual/audio 分離；長 region 有 temporal coverage；素材角色未被誤當入選決定；duplicate generic summaries 不得大量出現；另驗證 `resource_budget_declared`、`limit_mode_truthful`、`checkpoint_complete`、`resource_retries_traceable`、`no_resource_based_coverage_loss`。任何 `RESOURCE_BLOCKED`、未完成 queue 或因降載導致的重要畫面無法判讀都不能 PASS。若 runtime 沒有真正 Vision 能力，`visual_semantic_status=UNAVAILABLE` 且 overall=FAIL，禁止用 transcript/GPS 偽造 PASS。
+
+另驗證 `vlm_reliability_audit`（隨機抽查錯誤率與欄位）、`vlm_field_reliability` 如實標示、`intra_clip_segments_checked`（≥60 秒片皆有看圖確認的段落且涵蓋 0 至片尾無縫隙），以及 Agent 裁決紀錄。
 
 ## 禁止事項
 不得做 Event Fusion、Story Planning、Event/Shot Selection、Cut Point、粗剪或調色。

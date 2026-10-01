@@ -59,6 +59,7 @@ Hero Frame 與 Hero Scene 必須分開顯示：Hero Frame 是每支原片的代�
 - `>60 秒`：Hero + 10%/30%/50%/70%/90%。
 
 若 Stage 0 已有 `visual_regions`、scene changes、interesting regions、events、reaction/animal regions，優先抽內容變化點；百分比只作 fallback。所有 Hero/Contact frames 必須來自 Original Source。
+若 Stage 0B 有 `intra_clip_segments`，≥60 秒的長片須依段落列出代表縮圖與時間範圍，Human Review 可標到 `segment_id`；整片標記不得取代段落標記。
 
 ## 可點擊播放
 建立 Main Review Player。點 Hero/Contact frame 直接 seek 到對應時間並播放；支援 Previous/Next Clip、播放/暫停/拖曳。若原始 DJI codec 瀏覽器不穩定，建立 720p 或 1080p H.264/AAC Review Proxy；Proxy 僅供 Stage 0D 審片，時間 mapping 必須與 original 1:1，絕對不得供 Stage 1/2/3 正式來源。
@@ -94,7 +95,7 @@ Hero Frame 與 Hero Scene 必須分開顯示：Hero Frame 是每支原片的代�
 至少支援：全部、尚未審查、AI 強烈推薦／建議考慮／可能略過、Human 不指定／候選／重要／必須再看／必須保留／略過、AI/Human 意見不同、長影片、人物、動物、Reaction。提供「檢查 AI 建議略過的素材」：AI LOW/LIKELY_SKIP + Human 尚未審查。所有篩選名稱以繁中顯示，預設依拍攝時間排序。
 
 ## Stage 1 Handoff
-Stage 1 必須讀 `master_footage_review.json`。`summary_feedback` 作為可追溯的 Human context／事實修正，不能單獨提高入選優先級；只有明確的 `human_review.status` 才表示選片意願。Human Candidate 不得因 AI LOW 被略過；Important 若排除需 `exclusion_reason`；Must Review 必須重看原片；Must Keep 原則必留。Human Review 是額外 evidence，不得覆寫 Stage 0 原始 visual/event/metadata；若 Human 修正與像素證據衝突，Stage 1 必須列為 conflict 並重看原片。
+Stage 1 必須讀 `master_footage_review.json`。`summary_feedback` 作為可追溯的 Human context／事實修正，不能單獨提高入選優先級；只有明確的 `human_review.status` 才表示選片意願。Human Candidate 不得因 AI LOW 被略過；Important 若排除需 `exclusion_reason`；Must Review 必須重看原片；Must Keep 原則必留。Human Review 是額外 evidence，不得覆寫 Stage 0 原始 visual/event/metadata；若 Human 修正與像素證據衝突，Stage 1 必須列為 conflict 並重看原片。 段落層級的標記（`segment_id`）一併傳遞給 Stage 1。
 
 ## 輸出
 `stage0d_master_review/` 至少包含：

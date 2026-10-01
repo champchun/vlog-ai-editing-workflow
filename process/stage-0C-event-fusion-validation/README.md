@@ -24,3 +24,6 @@
 - 暫存：`process/workspace/temp/`
 
 GPS/Timeline 是本階段重要輔助資料，但具名地點仍必須通過同日/時間與可靠證據限制；照片與 GPS 的 provenance 必須和影片視覺證據分開。
+
+## 本機腳本（`scripts/`）
+`c1_group.py`（確定性分組）→ `c2_digest.py`（證據摘要）→ Agent 撰寫 Event → `c3_assemble.py`（正式輸出與驗證）→ `c4_places.py`（地點命名表，輸出 `workspace/gps/place_naming.html`；使用者填完下載 `place_names.json` 後重跑 `c3_assemble.py`）。

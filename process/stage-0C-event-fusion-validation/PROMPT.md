@@ -15,8 +15,12 @@ Event 不是單句 transcript。以時間、人物、空間、動作、互動、
 - `story_value`、`emotional_value`、`interaction_value`、`visual_value`、`novelty`、`confidence`
 - provenance：哪些來自 visual、transcript、GPS、metadata
 
+## 事件分組與撰寫流程
+允許先以確定性規則分組（同日、時間間隔、GPS 距離、活動文字相似度；Stage 0B 的 `intra_clip_segments` 作為單位），再由 Agent 依證據摘要把 session 拆成 Event 並撰寫 Trigger→Development→Reaction→Result。每個片段單位必須剛好屬於一個 Event；事件文字不得新增證據外的內容，看不到的 reaction／result 寫「未見」。
+
 ## GPS/Location Safety
 日期/時間/GPS 是硬限制。Named location 只能來自同日 GPS/Timeline、使用者確認或畫面可讀招牌等可靠證據。Transcript/visual semantics 只能驗證同日候選，不能自行創造地點；資料不足就 unknown/approximate。visual_summary 不得因 GPS 而寫入沒看到的地點名稱。
+Timeline 匯出檔（例如 `Timeline.json`）可能只含座標與 `placeID`，沒有名稱。地名由使用者逐地點確認（產生含代表影格的「地點命名表」，輸出 `gps/place_names.json`，`source=user_confirmed`）；事件對應地點時，以同日 Timeline 停留時間重疊為主、座標群集為輔，且事件日期必須落在該地點的日期內，不得跨日配對。Timeline 的 `Home`／`Work` 標註可作地點類型證據，但不等於地址。名稱來源須記錄在事件的 `location.name_source`。
 
 ## Transcript Mapping
 保留上游 `transcript_status`、`review_reason`、抽樣缺口與色彩證據；uncertain 台詞不能成為事件因果、人物身分或命名的唯一依據。若有 `source_proxy_manifest.json`，一併傳遞並以原片 ID 合併引用，禁止將 LRF 再形成獨立 Event。
@@ -51,6 +55,8 @@ Event 可新增 `hero_scene_assessment`：`candidate_id`、`agent_status`、`her
 另確認所有 CONFIRMED Hero 候選皆能對應合法 source/time 與 Event，VLM/Agent provenance 未被合併覆寫；把候選直接標為正式入選或因沒有 Hero 而捏造事件，overall=FAIL。
 
 確認：metadata source count 完整；visual_summary 真正描述畫面；visual subjects 與 audio speakers 分開；Event 非 transcript sentence 直接複製；Event source/time 可追溯；GPS 不跨日；color profile provenance 完整；重大欄位缺失 overall=FAIL。
+
+另驗證 `every_unit_in_exactly_one_event`（每個片段單位剛好屬於一個 Event）、`place_assignment_consistent`（事件日期在地點日期內）、`location_not_invented`（有名稱者皆為使用者確認或畫面可讀招牌）。
 
 ## 禁止事項
 不得做 Story Planning、Scene Coverage、Event Selection、Shot Selection、Cut Point、粗剪、BGM、Final Color。Stage 0 不因低分刪除合法 Event，除非 hard_unusable/invalid。

@@ -11,7 +11,7 @@
 - 驗證規則與案例
 
 ## 核心
-Coverage First：先確保主要 Scene 都被代表，再做 Event / Shot / Cut 決策。Stage 1 不 Render。
+Coverage First：先確保主要 Scene 都被代表，再做 Event / Shot / Cut 決策。Stage 1 不 Render。 長片以 Stage 0B `intra_clip_segments`／Stage 0D 段落標記為單位，cut range 須能對應到 `segment_id` 的時間範圍。
 
 ## Repo 資料結構
 執行前讀 `process/README.md` 與 `process/WORKSPACE_RULES.md`。

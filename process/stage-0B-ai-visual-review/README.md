@@ -22,9 +22,9 @@ Stage 0B 透過 `resource_budget` 控制 VLM 負載。本專案使用 16 GB Mac 
   "memory_limit_gb": 8,
   "limit_mode": "advisory",
   "max_parallel_jobs": 1,
-  "max_frames_per_request": 2,
-  "max_image_edge_px": 960,
-  "context_tokens": 4096,
+  "max_frames_per_request": 1,
+  "max_image_edge_px": 720,
+  "context_tokens": 2048,
   "checkpoint_every_regions": 1,
   "oom_retry_limit": 3
 }
@@ -45,7 +45,7 @@ launchctl setenv OLLAMA_MAX_LOADED_MODELS 1
 OLLAMA_NUM_PARALLEL=1 OLLAMA_MAX_LOADED_MODELS=1 ollama serve
 ```
 
-每個 API request 設定 `options.num_ctx=4096`。Stage 完成或資源阻擋時，使用 `ollama stop <本次模型名稱>` 卸載本次模型。參數與卸載方式參考 [Ollama 官方 FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.mdx)。模型載入已超過 8 GB 時，改用已獲准的較小量化 VLM；只減少影格無法保證足夠。
+每個 API request 設定 `options.num_ctx=2048`。Stage 完成或資源阻擋時，使用 `ollama stop <本次模型名稱>` 卸載本次模型。參數與卸載方式參考 [Ollama 官方 FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.mdx)。模型載入已超過 8 GB 時，改用已獲准的較小量化 VLM；只減少影格無法保證足夠。
 
 資源不足時先降低同時工作數、每批影格與圖片尺寸，再調低 batch/context 或使用已獲准的較小量化模型。每完成一個 region 就保存 checkpoint。降低資源只能改變分批方式，不能略過必要時間點；連續動作可拆成有重疊的小批次。超過重試次數仍失敗時應標 `RESOURCE_BLOCKED` 並讓 Stage 0B FAIL。
 
@@ -59,3 +59,6 @@ OLLAMA_NUM_PARALLEL=1 OLLAMA_MAX_LOADED_MODELS=1 ollama serve
 - 暫存抽幀/cache：`process/workspace/temp/`
 
 照片與 GPS 只能輔助，不得取代影片像素複核；本階段的 visual semantics 必須有實際畫面證據。
+
+## 本機腳本（`scripts/`）
+依序：`b1_plan.py`（取樣計畫）→ `b1b_densify.py`（長片加密）→ `b2_frames.py`（原片抽幀，硬體解碼、檢視用 LUT）→ `b3_vlm.py`（Ollama VLM，逐張 checkpoint）→ `b4_segments.py`（段落候選）→ `b5_select.py`（規則挑出要給 Agent 複核的項目）→ `b6_sheets.py`（聯絡表）→ Agent 複核 → `b7_assemble.py`（正式輸出與驗證）。VLM 執行期間不要同時跑其他 4K 解碼工作。
