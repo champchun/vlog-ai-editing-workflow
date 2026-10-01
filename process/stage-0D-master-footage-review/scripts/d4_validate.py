@@ -91,7 +91,8 @@ finally:
     except Exception: pass
     shutil.rmtree(tmp, ignore_errors=True)
 chk('human_review_persistence', bool(res) and all(res.values()), **res)
-real_clean = not (OUT / 'human_footage_review.json').exists() or all(v['status'] == 'NOT_REVIEWED' and v['summary_feedback']['action'] == 'NONE' for v in L(OUT / 'human_footage_review.json').values())
+hp = OUT / 'human_footage_review.json'
+real_clean = not hp.exists() or not any(t in hp.read_text(encoding='utf-8') for t in ('補充：測試', '測試理由', '段落測試'))
 chk('real_human_review_not_polluted_by_test', real_clean)
 # 9 seek mapping
 bad = [m['clip_id'] for m in master for t in [m['hero_time']] + [f['ts'] for f in m['contact_strip']] + [s['ts'] for s in m['segments']] if not (0 <= t <= m['duration'])]

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 0D｜快速滑片</title>
+<style>
+:root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif}
+html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+video{width:100%;height:100%;object-fit:contain;background:#000}
+.top{position:fixed;top:0;left:0;right:0;padding:12px 16px;background:linear-gradient(#000c,#0000);display:flex;gap:10px;align-items:center;flex-wrap:wrap;z-index:5;font-size:14px}
+.top a,.top label{color:#9ca3af;text-decoration:none}
+.bot{position:fixed;left:0;right:0;bottom:0;padding:70px 18px 16px;background:linear-gradient(#0000,#000d);z-index:5}
+.badges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:6px}.badge{padding:3px 10px;border-radius:999px;background:#374151;font-size:13px}
+.hi{background:#065f46}.lo{background:#7f1d1d}.mid{background:#1e3a8a}
+h2{margin:0 0 4px;font-size:17px}.meta{font-size:13px;color:#cbd5e1;max-width:900px;line-height:1.5}
+.reason{display:none;margin-top:6px;max-width:900px;font-size:13px;color:#e5e7eb;line-height:1.55}
+.bot.open .reason{display:block}
+.marks{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+button{border:1px solid #4b5563;border-radius:10px;background:#1f2937cc;color:#fff;padding:9px 14px;font:inherit;cursor:pointer}
+button:hover{background:#374151}button.on{background:#16a34a;border-color:#4ade80}button.no{background:#b91c1c;border-color:#f87171}button.big{font-size:18px;padding:12px 28px}
+.nav{position:fixed;top:50%;transform:translateY(-50%);z-index:6;width:52px;height:80px;font-size:28px;padding:0;opacity:.6}
+#L{left:8px}#R{right:8px}
+#prog{position:fixed;top:0;left:0;height:3px;background:#3b82f6;z-index:9}
+#hint{position:fixed;right:16px;bottom:16px;z-index:6;font-size:12px;color:#9ca3af;text-align:right;pointer-events:none}
+#toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#111827ee;padding:8px 16px;border-radius:8px;z-index:9;display:none}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div class="top"><b>快速滑片</b><span id="pos"></span>
+ <label><input type="checkbox" id="onlyNew"> 只看尚未審查</label><a href="/">→ 完整審片頁</a></div>
+<div id="stage"><video id="v" playsinline loop autoplay></video></div>
+<button class="nav" id="L" title="上一支（←）">‹</button><button class="nav" id="R" title="下一支（→）">›</button>
+<div class="bot" id="bot">
+ <div class="badges" id="badges"></div><h2 id="name"></h2><div class="meta" id="meta"></div>
+ <div class="reason" id="reason"></div>
+ <div class="marks" id="marks"></div>
+</div>
+<div id="hint">← → 切換｜↑ 要｜↓ 不要｜空白鍵 暫停｜I 展開理由｜0 清除｜觸控：左右滑切換、上滑要、下滑不要</div>
+<div id="toast"></div>
+<script>
+const REC={STRONG_CANDIDATE:'強烈推薦',CANDIDATE:'建議考慮',OPTIONAL:'可選素材',LIKELY_SKIP:'可能略過',TECHNICAL_REJECT:'技術不合格'};
+const PRI={HIGH:'高',MEDIUM:'中',LOW:'低'};
+const ST={NOT_REVIEWED:'尚未審查',NO_PREFERENCE:'不指定是否選用',CANDIDATE:'列為候選',IMPORTANT:'重要素材',MUST_REVIEW:'必須再看',MUST_KEEP:'必須保留',SKIP:'略過'};
+const YES='CANDIDATE',NO='SKIP',KEEPSET=['CANDIDATE','IMPORTANT','MUST_REVIEW','MUST_KEEP'];
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ft=s=>{s=+s;return s>=60?`${Math.floor(s/60)}分${Math.round(s%60)}秒`:`${s.toFixed(0)} 秒`};
+let all=[],list=[],i=0;
+function build(keep){
+  const only=$('#onlyNew').checked;
+  list=all.filter(c=>!only||(c.human_review?.status||'NOT_REVIEWED')==='NOT_REVIEWED')
+          .sort((a,b)=>b.ai_review.score-a.ai_review.score||a.creation_time_utc.localeCompare(b.creation_time_utc));
+  i=keep?Math.max(0,list.findIndex(c=>c.clip_id===keep)):0;
+  show();
+}
+function show(){
+  if(!list.length){$('#name').textContent='沒有符合的素材';$('#v').removeAttribute('src');return;}
+  i=Math.min(Math.max(i,0),list.length-1);const c=list[i],h=c.human_review||{},rec=c.ai_review.recommendation;
+  const v=$('#v');v.src=c.play_url;v.play().catch(()=>{});
+  $('#pos').textContent=`${i+1} / ${list.length}（依 AI 評分由高到低）`;
+  $('#prog').style.width=(100*(i+1)/list.length)+'%';
+  $('#badges').innerHTML=`<span class="badge ${rec==='STRONG_CANDIDATE'?'hi':rec==='CANDIDATE'?'mid':(rec==='LIKELY_SKIP'||rec==='TECHNICAL_REJECT')?'lo':''}">AI：${REC[rec]}</span>
+   <span class="badge">評分 ${c.ai_review.score}</span><span class="badge">優先級 ${PRI[c.ai_review.priority]}</span><span class="badge">人工：${ST[h.status||'NOT_REVIEWED']}</span>`;
+  $('#name').textContent=c.filename;
+  const ev=c.events[0];
+  $('#meta').innerHTML=`${esc(c.local_time.replace('T',' '))}｜${ft(c.duration)}${ev?`｜${esc(ev.event_type_zh)}｜${esc(ev.location)}`:''}<br>${esc((c.visual_summary||'').slice(0,140))}`;
+  $('#reason').textContent=c.ai_review.reason;
+  $('#marks').innerHTML=`<button data-s="${YES}" class="big ${KEEPSET.includes(h.status)?'on':''}">↑ 要</button><button data-s="${NO}" class="big ${h.status===NO?'no':''}">↓ 不要</button><button data-s="NOT_REVIEWED">0 清除</button>`;
+  const nx=list[i+1];if(nx){const p=document.createElement('link');p.rel='prefetch';p.href=nx.play_url;document.head.appendChild(p);}
+  history.replaceState(null,'','#'+c.clip_id);
+}
+function go(d){i+=d;show();}
+let tt;function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',1200);}
+async function mark(s){
+  const c=list[i],h=c.human_review||{};
+  const body={clip_id:c.clip_id,status:s,reason:h.reason||'',segment_reviews:h.segment_reviews||{},summary_feedback:h.summary_feedback||{action:'NONE',text:'',target_fields:[],affects_selection:false,updated_at:null}};
+  try{const r=await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw 0;
+    const j=await r.json();c.human_review={...h,status:j.saved_status,reason:body.reason,segment_reviews:body.segment_reviews,summary_feedback:body.summary_feedback};
+    toast(s===YES?'要 ✓':s===NO?'不要 ✗':'已清除');if(s!=='NOT_REVIEWED'&&i<list.length-1)i++;show();
+  }catch(e){toast('儲存失敗');}
+}
+$('#marks').addEventListener('click',e=>{const b=e.target.closest('button');if(b)mark(b.dataset.s);});
+$('#L').onclick=()=>go(-1);$('#R').onclick=()=>go(1);$('#onlyNew').onchange=()=>build(null);
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;
+  if(e.key==='ArrowRight'){go(1);e.preventDefault();}
+  else if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowUp'){mark(YES);e.preventDefault();}
+  else if(e.key==='ArrowDown'){mark(NO);e.preventDefault();}
+  else if(e.key===' '){const v=$('#v');v.paused?v.play():v.pause();e.preventDefault();}
+  else if(e.key==='i'||e.key==='I')$('#bot').classList.toggle('open');
+  else if(e.key==='0')mark('NOT_REVIEWED');
+  });
+let sx=0,sy=0;
+document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>50)go(dx<0?1:-1);else if(Math.abs(dy)>60)mark(dy<0?YES:NO);});
+document.addEventListener('wheel',(()=>{let lock=0;return e=>{if(Date.now()<lock||Math.abs(e.deltaY)+Math.abs(e.deltaX)<40)return;lock=Date.now()+500;go((e.deltaY+e.deltaX)>0?1:-1);};})(),{passive:true});
+$('#v').addEventListener('click',()=>{const v=$('#v');v.paused?v.play():v.pause();});
+fetch('/api/data').then(r=>r.json()).then(d=>{all=d;build(location.hash.slice(1)||null);});
+</script>
+</body>
+</html>

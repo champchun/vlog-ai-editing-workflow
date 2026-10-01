@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 KIT = ROOT / 'process/stage-0D-master-footage-review/examples'
 OUT = ROOT / 'process/workspace/project-output/stage0d_master_review'
-for f in ('app.py', 'master_footage_review.html'):
+for f in ('app.py', 'master_footage_review.html', 'quick_review.html'):
     shutil.copy(KIT / f, OUT / f)
 master = json.load(open(OUT / 'master_footage_review.json', encoding='utf-8'))
 
