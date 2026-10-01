@@ -1,5 +1,9 @@
 # Prompt｜Stage 0A Local Pre-analysis
 
+## 前置步驟：GPS 回寫（使用者自行執行，不屬於 0A 自動工作）
+若素材缺少 GPS，由使用者在執行 0A **之前**用 `scripts/geotag_engine.py` 依 `workspace/gps/` 的 Google Timeline 補寫（只補沒有 GPS 的檔案；會直接修改原始檔的 GPS metadata，須在 0A 雜湊與快取之前完成）。0A 不代為寫入，也不得自行加 `--write`。
+0A 只讀取檔內 GPS 並標示來源：有 `geotag_report.csv` 者標為 Timeline 回寫；照片的 `GPSProcessingMethod=Google Timeline` 也視為 Timeline 回寫證據；其餘依相機記錄（`GPSStatus=A`）判斷，來源不明則標「未建立」。任何 GPS 都只是 auxiliary evidence。
+
 ## 統一素材入口
 遞迴掃描 `process/workspace/media/` 的影片與照片。metadata catalog 每筆保存 `media_type=video/photo`、實際 `source_path` 與來源識別；以格式／媒體探測確認類型。照片只分析適用的 EXIF、時間、尺寸與 GPS，不執行影片轉錄、VAD、FPS 或 cut range 分析。影片與照片分別計數，後續 Source Video Clip Count 只包含影片，並依既有代理／重複檔排除規則處理。無法辨識類型時記錄警告，不得猜為影片。
 

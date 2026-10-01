@@ -76,7 +76,7 @@ def main():
         gp = [u["gps"] for u in us if u.get("gps")]
         loc = {"name": None, "status": "unknown",
                "gps_auxiliary": ({"lat": round(sum(g["lat"] for g in gp) / len(gp), 5), "lon": round(sum(g["lon"] for g in gp) / len(gp), 5),
-                                  "source": "Google Timeline written into file by geotag_from_timeline.py (" + ",".join(sorted({g.get("method") or "?" for g in gp})) + ")",
+                                  "source": "Google Timeline written into file by geotag_engine.py (" + ",".join(sorted({g.get("method") or "?" for g in gp})) + ")",
                                   "same_day_only": True} if gp else None),
                "signage_evidence": e["evidence_notes"].get("signage_location"),
                "note": "No place name asserted: Timeline source file is not in workspace/gps and place names were not verified. "

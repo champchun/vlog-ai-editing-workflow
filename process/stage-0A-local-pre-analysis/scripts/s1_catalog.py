@@ -35,7 +35,7 @@ def fr(s):
 
 
 def load_geotag_reports():
-    """geotag_report.csv written by shared-resources/geotag_from_timeline.py."""
+    """geotag_report.csv written by geotag_engine.py (earlier runs: shared-resources/geotag_from_timeline.py)."""
     rep = {}
     for p in MEDIA.rglob("geotag_report.csv"):
         if p.name.startswith("._"):
@@ -113,7 +113,7 @@ def video_record(p: Path, ex: dict, geo: dict | None):
         gps = {"lat": lat, "lon": lon, "written_by": None, "method": None,
                "evidence_level": "auxiliary", "note": None}
         if geo:
-            gps.update(written_by="shared-resources/geotag_from_timeline.py (Google Maps Timeline)",
+            gps.update(written_by="stage-0A geotag_engine.py (Google Maps Timeline; earlier runs: shared-resources/geotag_from_timeline.py)",
                        method=geo.get("source"), report=geo.get("report_path"),
                        report_status=geo.get("status"))
             gps["note"] = ("Coordinates were written into the file from Google Timeline, not recorded by the camera. "
@@ -179,9 +179,12 @@ def photo_record(p: Path, ex: dict, geo: dict | None):
     gps = None
     lat, lon = pick(ex, "Composite:GPSLatitude"), pick(ex, "Composite:GPSLongitude")
     if lat is not None and lon is not None:
-        cam_fix = pick(ex, "GPS:GPSStatus") == "A" and pick(ex, "Composite:GPSDateTime")
+        marker = str(pick(ex, "GPS:GPSProcessingMethod") or "")
+        if "timeline" in marker.lower() and not geo:
+            geo = {"source": "timeline(in-file GPSProcessingMethod)", "report_path": None}
+        cam_fix = pick(ex, "GPS:GPSStatus") == "A" and pick(ex, "Composite:GPSDateTime") and not geo
         gps = {"lat": lat, "lon": lon, "evidence_level": "auxiliary",
-               "written_by": "shared-resources/geotag_from_timeline.py (Google Maps Timeline)" if geo
+               "written_by": "stage-0A geotag_engine.py (Google Maps Timeline; earlier runs: shared-resources/geotag_from_timeline.py)" if geo
                else ("camera EXIF GPS (GPSStatus=A)" if cam_fix else None),
                "method": geo.get("source") if geo else ("camera_exif" if cam_fix else None),
                "gps_datetime_utc": pick(ex, "Composite:GPSDateTime"),

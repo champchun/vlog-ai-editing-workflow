@@ -1,0 +1,12 @@
+# Private / large project data stays out of git (see process/WORKSPACE_RULES.md).
+# Only the README.md of each workspace folder is tracked.
+process/workspace/**
+!process/workspace/
+!process/workspace/*/
+!process/workspace/*/README.md
+
+# macOS and Python noise (external drives create ._* AppleDouble files)
+._*
+.DS_Store
+__pycache__/
+*.pyc

@@ -37,3 +37,12 @@ python3 s4_assemble.py     # 產出正式 stage0a_output 與 validation
 ```
 
 中間快取在 `process/workspace/temp/stage0a/`（可刪除重建）；正式輸出在 `process/workspace/project-output/stage0a_output/`。各步驟以原片大小/mtime/參數做快取鍵，重跑只補算變更的片段。
+
+## GPS 回寫（0A 之前，自行執行）
+`scripts/geotag_engine.py` 依 `workspace/gps/` 的 Timeline 補寫沒有 GPS 的檔案（省略 `--timeline` 時，自動使用該資料夾內檔名含 `timeline` 的 .json；有多個會要求指定）（預設只預覽，加 `--write` 才寫入原始檔）。例：
+
+```bash
+python3 scripts/geotag_engine.py --timeline "../workspace/gps/Timeline 3.json" --media ../workspace/media/JPG
+```
+
+注意：報表預設寫在該素材資料夾的 `geotag_report.csv`；已回寫過的資料夾（例如 `DJI_001`）請勿再跑，否則報表會被「已有 GPS，略過」覆蓋，0A 就看不到原本的 Timeline 來源紀錄（需要重跑時加 `--report` 另存）。
