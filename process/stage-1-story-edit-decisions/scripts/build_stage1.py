@@ -37,23 +37,30 @@ SHOTS = [
  ('0049', 33.8, 39.8, 'EV031', 'payoff', '透明船', '收拾飼料、「一二三、再見、謝謝」，餵魚段落的自然收束。', 'original', '透明船', 'bright', ''),
  ('0055', 42.8, 51.0, 'EV036', 'action', '透明船', '下船後在淺灘玩水，「有小小的魚你有看到嗎」，延續發現主題。', 'original', 'アンチ浜', 'bright', ''),
  ('0058', 66.0, 79.5, 'EV036', 'ambient', '透明船', '兩個小孩並肩沿海岸走遠，白沙碧海的段落收尾（HC012）。', 'ambient', 'アンチ浜', 'bright', ''),
+ ('0060', 2.5, 4.0, 'EV037', 'ambient', '透明船', '浪花退去的沙灘上映著拍攝者自己的影子（使用者指定 B-roll，B-roll 慢動作 0.5x，成片 3 秒）', 'ambient', '透明船', 'bright', 'BROLL'),
  # ---- 3 早餐與備瀨 ----
  ('0065', 64.0, 76.0, 'EV039', 'detail', '日常', '民宿廚房大人輪流餵兩個小孩水果，旅途中溫暖的日常（HC031）。', 'original', '民宿', 'dim', '室內偏暗'),
  ('0076', 10.8, 20.2, 'EV042', 'dialogue', '日常', '冰淇淋店外，小孩請大人「幫我餵」，家人互動的小趣味。', 'original', '備瀨', 'bright', ''),
  # ---- 4 海洋博 ----
  ('0090', 44.0, 48.9, 'EV045', 'action', '海洋博', '海豚躍出水面（HC039），海洋博公園的第一個大場面。', 'original', '海洋博', 'bright', ''),
- ('0106', 22.0, 29.0, 'EV051', 'establishing', '海洋博', '兩隻海豚貼近池邊游動，帶出下一個餵食動作。', 'ambient', '海洋博', 'bright', ''),
+ ('0106', 22.0, 27.7, 'EV051', 'establishing', '海洋博', '兩隻海豚貼近池邊游動，帶出下一個餵食動作。', 'ambient', '海洋博', 'bright', ''),
  ('0106', 30.0, 39.5, 'EV051', 'action', '海洋博', '小孩用長夾子夾小魚餵海豚，大人在旁等牠張嘴（HC001）。', 'original', '海洋博', 'bright', ''),
- ('0115', 1.0, 10.5, 'EV060', 'reaction', '海洋博', '巨大隆頭魚貼著觀景窗游過，兩個小孩站在窗前盯著看（HC025）。', 'original', '水族館', 'blue', ''),
- ('0132', 14.0, 25.0, 'EV069', 'detail', '海洋博', '大水槽裡大魚與魚群游過、家人比手指，水族館的震撼感。', 'original', '水族館', 'blue', '畫面偏暗藍'),
+ ('0107', 1.5, 7.5, 'EV052', 'action', '海洋博', '海豚浮出水面、張大嘴巴吃小孩餵的魚，接在餵食動作之後呈現結果（使用者審片 v1 要求加入）。', 'original', '海洋博', 'bright', ''),
  ('0110', 104.0, 112.0, 'EV056', 'action', '海洋博', '步道噴霧中小孩蹲下、跑動玩耍，輕鬆活潑的段落（HC045）。', 'original', '海洋博', 'bright', ''),
  ('0110', 134.5, 141.5, 'EV056', 'reaction', '海洋博', '孩子衝出噴霧、發出興奮叫聲，作為海洋博段落的歡快收尾（HC022）。', 'original', '海洋博', 'bright', ''),
+ ('0115', 1.0, 10.5, 'EV060', 'reaction', '海洋博', '巨大隆頭魚貼著觀景窗游過，兩個小孩站在窗前盯著看（HC025）。', 'original', '水族館', 'blue', ''),
+ ('0114', 3.0, 4.5, 'EV059', 'ambient', '海洋博', '水族館珊瑚礁與魚群（B-roll 慢動作 0.5x，成片 3 秒）', 'ambient', '水族館', 'blue', 'BROLL'),
+ ('0132', 14.0, 25.0, 'EV069', 'detail', '海洋博', '大水槽裡大魚與魚群游過、家人比手指，水族館的震撼感。', 'original', '水族館', 'blue', '畫面偏暗藍'),
+ ('0122', 8.0, 9.5, 'EV063', 'detail', '海洋博', '水母在藍光中漂浮（B-roll 慢動作 0.5x，成片 3 秒）', 'ambient', '水族館', 'blue', 'BROLL'),
+ ('0143', 4.8, 6.3, 'EV075', 'detail', '海洋博', '烏龜在水族箱中伸出頭（B-roll 慢動作 0.5x，成片 3 秒）', 'ambient', '水族館', 'blue', 'BROLL'),
  # ---- 5 古宇利 / Neo Park ----
  ('0331', 0.8, 6.3, 'EV087', 'reaction', '古宇利', '古宇利海洋塔觀景台，小孩舉著相機拍照，呼應本片「孩子也在拍」的視角，並代表古宇利海洋塔段落。', 'original', '古宇利', 'bright', '白色牆面偏亮'),
- ('0347', 8.5, 14.3, 'EV090', 'dialogue', 'Neo Park', '餐廳等餐「我肚子好餓」，小孩的真實碎念。', 'original', '餐廳', 'dim', ''),
+ ('0348', 5.0, 6.5, 'EV092', 'establishing', 'Neo Park', 'Neo Park 入口岩壁與招牌（B-roll 慢動作 0.5x，成片 3 秒）', 'ambient', 'Neo Park', 'bright', 'BROLL'),
  ('0349', 3.0, 11.5, 'EV093', 'reaction', 'Neo Park', '小孩貼著玻璃看沙貓，專注的表情與一旁的輕聲評論。', 'original', 'Neo Park', 'dim', '展館昏暗'),
+ ('0356', 1.5, 3.0, 'EV100', 'detail', 'Neo Park', '蜥蜴停在綠葉上（B-roll 慢動作 0.5x，成片 3 秒）', 'ambient', 'Neo Park', 'bright', 'BROLL'),
  ('0351', 92.6, 102.5, 'EV096', 'action', 'Neo Park', '小孩拿飼料餵聖鹮，「丟給他們吃」，動物互動。', 'original', 'Neo Park', 'bright', ''),
  ('0359', 38.0, 47.0, 'EV103', 'ambient', 'Neo Park', '搭小火車，兩個小孩並排看窗外，旅程中的安靜時刻。', 'ambient', 'Neo Park', 'dim', ''),
+ ('0363', 14.0, 15.5, 'EV104', 'ambient', 'Neo Park', '橋上綠色湖面與樹林（B-roll 慢動作 0.5x，成片 3 秒）', 'ambient', 'Neo Park', 'bright', 'BROLL'),
  ('0380', 8.8, 17.2, 'EV109', 'dialogue', 'Neo Park', '室內木製遊戲區，小孩穿草鞋玩拉繩，大人稱讚「好厲害喔」。', 'original', 'Neo Park', 'dim', ''),
  ('0385', 74.2, 84.0, 'EV111', 'detail', 'Neo Park', 'Blue Seal 吃冰，兩個小孩分著吃的甜蜜收尾。', 'original', 'Blue Seal', 'bright', ''),
  # ---- 6 海灘 ----
@@ -62,9 +69,11 @@ SHOTS = [
  ('0400', 57.0, 68.0, 'EV126', 'payoff', '海灘', '「欸有魚」，在浪花邊發現小魚，海灘段落的小驚喜。', 'original', 'Zane濱', 'grey', '陰天'),
  ('0413', 15.0, 27.4, 'EV137', 'action', '海灘', '大人帶小孩在淺灘涉水，最後牽手走回沙灘。', 'original', 'Zane濱', 'grey', '陰天'),
  ('0416', 556.0, 566.0, 'EV146', 'detail', '海灘', 'Cocoroar Cafe 兩個小孩在桌邊吃東西、玩耍，午餐的日常代表。', 'original', '咖啡廳', 'dim', ''),
+ ('0420', 3.5, 5.0, 'EV148', 'detail', '海灘', '咖啡廳鬆餅特寫（B-roll 慢動作 0.5x，成片 3 秒）', 'ambient', '海灘', 'bright', 'BROLL'),
  # ---- 7 兒童王國 ----
  ('0429', 3.0, 11.0, 'EV153', 'action', '兒童王國', '科學遊樂區小孩玩滾球裝置，動手操作。', 'original', '兒童王國', 'dim', ''),
  ('0441', 7.0, 19.0, 'EV157', 'action', '兒童王國', '暗室中拿發光筆在牆上作畫，兩個小孩專注。', 'original', '兒童王國', 'dark', '暗室，噪點'),
+ ('0463', 3.0, 4.5, 'EV172', 'establishing', '兒童王國', '園區湖景與城市全景（B-roll 慢動作 0.5x，成片 3 秒）', 'ambient', '兒童王國', 'bright', 'BROLL'),
  ('0456', 30.0, 44.0, 'EV169', 'action', '兒童王國', '動作捕捉投影牆前揮手跳動，看著畫面跟著自己動。', 'original', '兒童王國', 'dark', '偏暗'),
  ('0472', 3.0, 12.0, 'EV179', 'reaction', '兒童王國', '站在人工瀑布下被水沖得摀臉，最強的 reaction（HC038）。', 'original', '兒童王國', 'bright', '偏白霧'),
  ('0472', 31.5, 41.0, 'EV179', 'payoff', '兒童王國', '淺水區趴著踢水、大人直呼好厲害，戲水段落的收束。', 'original', '兒童王國', 'bright', '偏白霧'),
@@ -154,10 +163,11 @@ def main():
     for i, (k, a, b, ev, role, section, reason, audio, place, tone, note) in enumerate(SHOTS, 1):
         c = by4[k]
         cid = c['clip_id']
+        broll = (note == 'BROLL')
         sents = sentences[cid]
         a0, b0 = a, b
         flags = []
-        for s in sents:
+        for s in ([] if broll else sents):
             if s['start'] < a < s['end']:
                 if a - s['start'] <= 2.5:
                     a = max(0.0, round(s['start'] - 0.15, 2)); flags.append('start_snapped_to_sentence')
@@ -182,10 +192,11 @@ def main():
             'source_clip': cid, 'filename': c['filename'], 'source_path': c['source_path'], 'media_type': 'video',
             'cut_start': round(a, 2), 'cut_end': round(b, 2), 'duration': round(b - a, 2),
             'source_sentence_ids': sids, 'editorial_reason': reason,
-            'audio_strategy': audio, 'speed': 1.0,
+            'audio_strategy': 'mute' if broll else audio, 'speed': 0.5 if broll else 1.0,
+            'is_broll': broll, 'timeline_duration': round((b - a) / (0.5 if broll else 1.0), 2),
             'reframe': {'enabled': False, 'scale': 1.0, 'reason': '原構圖可用，保留互動雙方與環境'},
             'transition_out': 'cut',
-            'quality_warning': ([note] if note else []) + ([f"color_profile={c['color_profile']}"] if c.get('color_profile') else []),
+            'quality_warning': (['B-roll 慢動作 0.5x，原音靜音（成片以 BGM 為主）'] if broll else ([note] if note else [])) + ([f"color_profile={c['color_profile']}"] if c.get('color_profile') else []),
             'provenance': {
                 'event_range_ok': in_event, 'stage0d_ai': c['ai_review']['recommendation'], 'stage0d_human': c['human_review']['status'],
                 'review_relationship': c['review_relationship'], 'director_visual_review': 'Original Media 8-frame ffmpeg strip over cut range',
@@ -342,14 +353,14 @@ def main():
       'impact': '低，旅程從機場開始', 'resolution': '接受缺口'},
     ]
 
-    total = round(sum(s['duration'] for s in shots), 2)
+    total = round(sum(s['timeline_duration'] for s in shots), 2)
     roles = Counter(s['role'] for s in shots)
 
     # ---- story plan ----
     sections = []
     for name in dict.fromkeys(s['story_section'] for s in shots):
         ss = [s for s in shots if s['story_section'] == name]
-        sections.append({'section': name, 'shot_ids': [s['shot_id'] for s in ss], 'duration': round(sum(s['duration'] for s in ss), 2),
+        sections.append({'section': name, 'shot_ids': [s['shot_id'] for s in ss], 'duration': round(sum(s['timeline_duration'] for s in ss), 2),
                          'events': list(dict.fromkeys(s['event_id'] for s in ss))})
     story_plan = {
      'title': '沖繩五天四夜：孩子們的視角', 'spine': '出發 → 透明船出海餵魚（全片高點）→ 日常小插曲 → 海洋博 → Neo Park/古宇利 → 海灘 → 兒童王國 → 小孩要自己錄（反轉）→ 機場看飛機（結尾）',
@@ -379,7 +390,7 @@ def main():
         'stage': 1, 'version': 1, 'format': '16:9', 'fps_note': '成片 fps 由 Stage 2 依原片 29.97/59.94 決定，本階段不 Render',
         'total_duration_s': total, 'shots': shots, 'semantic_integrity_review': [],
         'semantic_integrity_note': '本輪沒有對話重排、刪句或 J/L Cut；所有 Shot 保持原片單一連續範圍與原音，因此不需 semantic_integrity_review 條目。',
-        'audio_segments_note': '未使用 audio_segments；audio_strategy 僅為 original／ambient，Stage 2 直接取該 Shot 的原片音訊。',
+        'audio_segments_note': '未使用 audio_segments；audio_strategy 為 original／ambient，慢動作 B-roll 為 mute，Stage 2 直接取該 Shot 的原片音訊。',
         'human_review_conflicts': conflicts,
     })
 
