@@ -75,7 +75,7 @@ Hero Frame 與 Hero Scene 必須分開顯示：Hero Frame 是每支原片的代�
 
 摘要回饋保存為 `summary_feedback`：`action=NONE/APPEND/CORRECT/REPLACE`、`text`、`target_fields`、`affects_selection=false`、`updated_at`。原始 AI summary 不得覆寫；畫面另外呈現 Human 補充／修正，合併顯示時標明 provenance。使用者只輸入補充文字而未指定選片意願時，狀態保存為 `NO_PREFERENCE`，不得自動改成 Candidate、Important 或 Must Keep。
 
-人工選片意願保存於 `human_review.status`：`NOT_REVIEWED`、`NO_PREFERENCE`、`CANDIDATE`、`IMPORTANT`、`MUST_REVIEW`、`MUST_KEEP`、`SKIP`，並以 `human_review.reason` 保存選片理由。另可用獨立布林 `human_review.broll=true` 標記「可當 B-roll」（空景、環境、細節、轉場畫面）；它與 `status` 並存，被標 `SKIP` 的素材仍可標 B-roll，Stage 1 需列出所有 `broll=true` 素材當 B-roll 候選池，但不得因此視為 `CANDIDATE`。`NOT_REVIEWED` 表示尚未完成檢視；`NO_PREFERENCE` 表示已查看或補充內容，但沒有要求採用或排除。
+人工選片意願保存於 `human_review.status`：`NOT_REVIEWED`、`NO_PREFERENCE`、`CANDIDATE`、`IMPORTANT`、`MUST_REVIEW`、`MUST_KEEP`、`SKIP`，並以 `human_review.reason` 保存選片理由。另可用獨立布林 `human_review.broll=true` 標記「可當 B-roll」（空景、環境、細節、轉場畫面）；快速滑片頁的 B-roll 手勢會將 `status` 設為 `NO_PREFERENCE`（A-roll 為 `CANDIDATE`，與 B-roll 互斥）；API 仍允許 `broll` 與任何 `status` 並存，Stage 1 需列出所有 `broll=true` 素材當 B-roll 候選池，但不得因此視為 `CANDIDATE`。`NOT_REVIEWED` 表示尚未完成檢視；`NO_PREFERENCE` 表示已查看或補充內容，但沒有要求採用或排除。
 
 定義：
 - `NO_PREFERENCE`：補充／修正資訊，不影響選片優先級。

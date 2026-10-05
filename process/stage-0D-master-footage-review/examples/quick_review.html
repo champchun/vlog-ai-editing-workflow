@@ -39,12 +39,12 @@ button:hover{background:#374151}button.on{background:#16a34a;border-color:#4ade8
  <div class="reason" id="reason"></div>
  <div class="marks" id="marks"></div>
 </div>
-<div id="hint">← → 切換｜↑ 要｜↓ 不要｜B 標 B-roll（可與要／不要並存）｜空白鍵 暫停｜I 展開理由｜0 清除｜觸控：左右滑切換、上滑要、下滑不要</div>
+<div id="hint">← A-roll（要）｜→ B-roll｜↓ 不要｜↑ 上一支｜A／B 同左右｜空白鍵 暫停｜I 展開理由｜0 清除｜觸控：左滑 A-roll、右滑 B-roll、下滑不要、上滑回上一支（標記後自動下一支）</div>
 <div id="toast"></div>
 <script>
 const REC={STRONG_CANDIDATE:'強烈推薦',CANDIDATE:'建議考慮',OPTIONAL:'可選素材',LIKELY_SKIP:'可能略過',TECHNICAL_REJECT:'技術不合格'};
 const PRI={HIGH:'高',MEDIUM:'中',LOW:'低'};
-const ST={NOT_REVIEWED:'尚未審查',NO_PREFERENCE:'不指定是否選用',CANDIDATE:'列為候選',IMPORTANT:'重要素材',MUST_REVIEW:'必須再看',MUST_KEEP:'必須保留',SKIP:'略過'};
+const ST={NOT_REVIEWED:'尚未審查',NO_PREFERENCE:'不指定是否選用',CANDIDATE:'A-roll（候選）',IMPORTANT:'重要素材',MUST_REVIEW:'必須再看',MUST_KEEP:'必須保留',SKIP:'略過'};
 const YES='CANDIDATE',NO='SKIP',KEEPSET=['CANDIDATE','IMPORTANT','MUST_REVIEW','MUST_KEEP'];
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -69,40 +69,41 @@ function show(){
   const ev=c.events[0];
   $('#meta').innerHTML=`${esc(c.local_time.replace('T',' '))}｜${ft(c.duration)}${ev?`｜${esc(ev.event_type_zh)}｜${esc(ev.location)}`:''}<br>${esc((c.visual_summary||'').slice(0,140))}`;
   $('#reason').textContent=c.ai_review.reason;
-  $('#marks').innerHTML=`<button data-s="${YES}" class="big ${KEEPSET.includes(h.status)?'on':''}">↑ 要</button><button data-s="${NO}" class="big ${h.status===NO?'no':''}">↓ 不要</button><button data-s="NOT_REVIEWED">0 清除</button><button data-b="1" class="${h.broll?'on':''}">B 可當 B-roll</button>`;
+  $('#marks').innerHTML=`<button data-s="${YES}" data-b="0" class="big ${KEEPSET.includes(h.status)&&!h.broll?'on':''}">← A-roll（要）</button><button data-s="NO_PREFERENCE" data-b="1" class="big ${h.broll?'on':''}">→ B-roll</button><button data-s="${NO}" data-b="0" class="big ${h.status===NO?'no':''}">↓ 不要</button><button data-s="NOT_REVIEWED" data-b="0">0 清除</button><button data-prev="1">↑ 上一支</button>`;
   const nx=list[i+1];if(nx){const p=document.createElement('link');p.rel='prefetch';p.href=nx.play_url;document.head.appendChild(p);}
   history.replaceState(null,'','#'+c.clip_id);
 }
 function go(d){i+=d;show();}
 let tt;function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',1200);}
-async function mark(s){
+async function mark(s,b){
   const c=list[i],h=c.human_review||{};
-  const body={clip_id:c.clip_id,status:s,broll:s==='NOT_REVIEWED'?false:!!h.broll,reason:h.reason||'',segment_reviews:h.segment_reviews||{},summary_feedback:h.summary_feedback||{action:'NONE',text:'',target_fields:[],affects_selection:false,updated_at:null}};
+  const body={clip_id:c.clip_id,status:s,broll:!!b,reason:h.reason||'',segment_reviews:h.segment_reviews||{},summary_feedback:h.summary_feedback||{action:'NONE',text:'',target_fields:[],affects_selection:false,updated_at:null}};
   try{const r=await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw 0;
     const j=await r.json();c.human_review={...h,status:j.saved_status,broll:body.broll,reason:body.reason,segment_reviews:body.segment_reviews,summary_feedback:body.summary_feedback};
-    toast(s===YES?'要 ✓':s===NO?'不要 ✗':'已清除');if(s!=='NOT_REVIEWED'&&i<list.length-1)i++;show();
+    toast(b?'B-roll ✓':s===YES?'A-roll ✓':s===NO?'不要 ✗':'已清除');if(s!=='NOT_REVIEWED'&&i<list.length-1)i++;show();
   }catch(e){toast('儲存失敗');}
 }
 async function toggleB(){const c=list[i],h=c.human_review||{};const st=h.status||'NOT_REVIEWED';
   const body={clip_id:c.clip_id,status:st,broll:!h.broll,reason:h.reason||'',segment_reviews:h.segment_reviews||{},summary_feedback:h.summary_feedback||{action:'NONE',text:'',target_fields:[],affects_selection:false,updated_at:null}};
   try{const r=await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw 0;const j=await r.json();
     c.human_review={...h,status:j.saved_status,broll:body.broll};toast(body.broll?'已標 B-roll ✓（狀態不變）':'已取消 B-roll');show();}catch(e){toast('儲存失敗');}}
-$('#marks').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.b)toggleB();else mark(b.dataset.s);});
+$('#marks').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.prev)go(-1);else mark(b.dataset.s,b.dataset.b==='1');});
 $('#L').onclick=()=>go(-1);$('#R').onclick=()=>go(1);$('#onlyNew').onchange=$('#onlySkip').onchange=$('#onlyBroll').onchange=()=>build(null);
 document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;
-  if(e.key==='ArrowRight'){go(1);e.preventDefault();}
-  else if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
-  else if(e.key==='ArrowUp'){mark(YES);e.preventDefault();}
-  else if(e.key==='ArrowDown'){mark(NO);e.preventDefault();}
+  if(e.key==='ArrowRight'){mark('NO_PREFERENCE',true);e.preventDefault();}
+  else if(e.key==='ArrowLeft'){mark(YES,false);e.preventDefault();}
+  else if(e.key==='ArrowUp'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowDown'){mark(NO,false);e.preventDefault();}
   else if(e.key===' '){const v=$('#v');v.paused?v.play():v.pause();e.preventDefault();}
   else if(e.key==='i'||e.key==='I')$('#bot').classList.toggle('open');
-  else if(e.key==='0')mark('NOT_REVIEWED');
-  else if(e.key==='b'||e.key==='B')toggleB();
+  else if(e.key==='0')mark('NOT_REVIEWED',false);
+  else if(e.key==='a'||e.key==='A')mark(YES,false);
+  else if(e.key==='b'||e.key==='B')mark('NO_PREFERENCE',true);
   });
 let sx=0,sy=0;
 document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
 document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
-  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>50)go(dx<0?1:-1);else if(Math.abs(dy)>60)mark(dy<0?YES:NO);});
+  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>50){if(dx<0)mark(YES,false);else mark('NO_PREFERENCE',true);}else if(Math.abs(dy)>60){if(dy>0)mark(NO,false);else go(-1);}});
 document.addEventListener('wheel',(()=>{let lock=0;return e=>{if(Date.now()<lock||Math.abs(e.deltaY)+Math.abs(e.deltaX)<40)return;lock=Date.now()+500;go((e.deltaY+e.deltaX)>0?1:-1);};})(),{passive:true});
 $('#v').addEventListener('click',()=>{const v=$('#v');v.paused?v.play():v.pause();});
 fetch('/api/data').then(r=>r.json()).then(d=>{all=d;build(location.hash.slice(1)||null);});

@@ -28,7 +28,7 @@ Stage 0D = 防漏選；Human Review 與 AI Review 必須分開保存，並交給
 Master Review 的基本單位是 `workspace/media/` 中的 Source Video Clip。Review proxy 只能審片，Stage 1/2/3 不得把 proxy 當正式來源。
 全素材審片 HTML 強制使用台灣繁體中文（`zh-TW`），包含介面文字與每支影片的 AI 摘要、評價及推薦理由。JSON 欄位與狀態代碼保持原樣，原始逐字稿及人工輸入保留原文。通用 `review/` 驗收報告可使用英文；完整語言規則與驗收條件見 `PROMPT.md`。
 
-人工操作分成「補充／修正摘要」與「選片意願」兩區。摘要操作顯示為「不修改、補充內容、修正錯誤、改寫摘要」；選片意願顯示為「尚未審查、不指定是否選用、列為候選、重要素材、必須再看、必須保留、略過」。介面使用繁中，JSON 仍保存 `NONE/APPEND/CORRECT/REPLACE` 與 `NOT_REVIEWED/NO_PREFERENCE/CANDIDATE/IMPORTANT/MUST_REVIEW/MUST_KEEP/SKIP`。只補充摘要時不得自動提高選片優先級。快速滑片頁另有「B 可當 B-roll」切換（`human_review.broll`），與要／不要並存，可用「只看被標不要」篩出被略過但適合當 B-roll 的素材。
+人工操作分成「補充／修正摘要」與「選片意願」兩區。摘要操作顯示為「不修改、補充內容、修正錯誤、改寫摘要」；選片意願顯示為「尚未審查、不指定是否選用、列為候選、重要素材、必須再看、必須保留、略過」。介面使用繁中，JSON 仍保存 `NONE/APPEND/CORRECT/REPLACE` 與 `NOT_REVIEWED/NO_PREFERENCE/CANDIDATE/IMPORTANT/MUST_REVIEW/MUST_KEEP/SKIP`。只補充摘要時不得自動提高選片優先級。快速滑片頁手勢：左＝A-roll（`status=CANDIDATE`）、右＝B-roll（`broll=true`、`status=NO_PREFERENCE`）、下＝不要（`SKIP`）、上＝上一支；A-roll 與 B-roll 互斥，標記後自動下一支。可用「只看被標不要」篩出被略過但適合當 B-roll 的素材。
 
 ## 實作紀錄（Stage 0D 首次執行）
 本 repo 的實際執行腳本在 `scripts/`，取代範例中的 `build_stage0d.py`，改讀 Stage 0B/0C 實際 schema，且不讀任何 Stage 1 資料：
