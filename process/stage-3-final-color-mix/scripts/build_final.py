@@ -117,18 +117,19 @@ for sec, xs in by_sec.items():
         adj[sid] = a
 
 # ============ location cards ============
-CARD_SECTIONS = {"出發", "透明船", "海洋博", "古宇利", "Neo Park", "海灘", "兒童王國"}
 cards = {}
-for sec, xs in by_sec.items():
-    if sec not in CARD_SECTIONS: continue
-    x = xs[0]; s = x["s"]; ev = events[s["event_id"]]; loc = ev["location"]
-    if loc.get("status") != "user_confirmed" or not loc.get("name"): continue
-    d = meta[s["source_clip"]]["camera_local_time_from_filename"][:10].replace("-", ".")
-    jp = any("ぁ" <= c <= "ヿ" for c in loc["name"])
-    L = min(2.5, x["exp"]-0.5)
-    cards[s["shot_id"]] = {"element_id": f"CARD_{sec}", "type": "location_card", "shot_id": s["shot_id"], "text": loc["name"], "date": d,
-        "font": FONT_JP if jp else FONT_CJK, "start": 0.4, "end": round(0.4+L, 2), "timeline_start": round(x["t0"]+0.4, 3), "timeline_end": round(x["t0"]+0.4+L, 3),
-        "evidence": {"name_source": loc.get("name_source"), "place_id": loc.get("place_id"), "date_source": "camera_local_time_from_filename (Stage 0A)"}}
+prev_name = None
+for x in tl:   # a card at EVERY place change (by user-confirmed place name), not only at section starts
+    s = x["s"]; loc = events[s["event_id"]]["location"]
+    name = loc.get("name") if loc.get("status") == "user_confirmed" else None
+    if name and name != prev_name:
+        d = meta[s["source_clip"]]["camera_local_time_from_filename"][:10].replace("-", ".")
+        jp = any("ぁ" <= c <= "ヿ" for c in name)
+        L = min(2.5, x["exp"]-0.5)
+        cards[s["shot_id"]] = {"element_id": f"CARD_{s['shot_id']}", "section": s["story_section"], "type": "location_card", "shot_id": s["shot_id"], "text": name, "date": d,
+            "font": FONT_JP if jp else FONT_CJK, "start": 0.4, "end": round(0.4+L, 2), "timeline_start": round(x["t0"]+0.4, 3), "timeline_end": round(x["t0"]+0.4+L, 3),
+            "evidence": {"name_source": loc.get("name_source"), "place_id": loc.get("place_id"), "date_source": "camera_local_time_from_filename (Stage 0A)"}}
+    if name: prev_name = name
 log("cards", {k: v["text"] for k, v in cards.items()})
 
 # ============ pass 2: render video shots from Original ============
