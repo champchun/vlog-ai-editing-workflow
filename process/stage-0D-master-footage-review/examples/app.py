@@ -111,9 +111,10 @@ class Handler(SimpleHTTPRequestHandler):
             action = fb.get('action', 'NONE')
             if action not in ACTIONS: action = 'NONE'
             status = data.get('status', 'NOT_REVIEWED')
+            broll = bool(data.get('broll', False))
             if status == 'IMPORTANT/MUST_REVIEW': status = 'MUST_REVIEW'
             if status not in STATUSES: status = 'NOT_REVIEWED'
-            if (action != 'NONE' or fb.get('text', '').strip()) and status == 'NOT_REVIEWED': status = 'NO_PREFERENCE'
+            if (action != 'NONE' or fb.get('text', '').strip() or broll) and status == 'NOT_REVIEWED': status = 'NO_PREFERENCE'
             segs = {}
             for sid, s in (data.get('segment_reviews') or {}).items():
                 st = s.get('status', 'NOT_REVIEWED')
@@ -122,7 +123,7 @@ class Handler(SimpleHTTPRequestHandler):
                     segs[sid] = {'status': st, 'reason': s.get('reason', ''), 'updated_at': s.get('updated_at')}
             with LOCK:
                 db = read_json(HUMAN, {})
-                db[cid] = {'status': status, 'reason': data.get('reason', ''), 'segment_reviews': segs,
+                db[cid] = {'status': status, 'broll': broll, 'reason': data.get('reason', ''), 'segment_reviews': segs,
                            'summary_feedback': {'action': action, 'text': fb.get('text', ''), 'target_fields': fb.get('target_fields', []),
                                                 'affects_selection': False, 'updated_at': fb.get('updated_at')}}
                 write_json(HUMAN, db)
