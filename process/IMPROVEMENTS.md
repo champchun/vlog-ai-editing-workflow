@@ -19,9 +19,9 @@
 ## 二、邏輯漏洞
 
 ### A. 報告比實際可靠（最嚴重，優先處理）
-- **A1 寫死的 PASS。** Stage 3 報告中 `audio_cleanup`、`white_balance_qc`、`dialogue_leveling` 等直接 `chk(True, …)`，沒有任何東西在驗證；Stage 2 `audio_sync_check` 只比對長度，不是同步。「PASS」實際意思是「無解碼錯誤、長度與響度達標」，不代表品質合格。處理：改成真正檢查，或標 `NOT_VERIFIED`／`NOT_PERFORMED`，不得顯示 PASS。
+- **A1 寫死的 PASS。**（DONE：Stage 2／3 報告已改為真檢查或 `NOT_VERIFIED`，overall 有 `NOT_VERIFIED` 時為 `PASS_WITH_WARNINGS`） Stage 3 報告中 `audio_cleanup`、`white_balance_qc`、`dialogue_leveling` 等直接 `chk(True, …)`，沒有任何東西在驗證；Stage 2 `audio_sync_check` 只比對長度，不是同步。「PASS」實際意思是「無解碼錯誤、長度與響度達標」，不代表品質合格。處理：改成真正檢查，或標 `NOT_VERIFIED`／`NOT_PERFORMED`，不得顯示 PASS。
 - **A2 自己驗證自己。** Stage 1 驗證由產生決策的同一支腳本撰寫；Stage 1R `no_editorial_change` 以建立 Storyboard 的同一份檔案比對，必然 PASS。專案有獨立的 `review/` 驗收角色，本次流程未使用。處理：Gate 前一律交 `review/` 獨立驗收，或至少以獨立腳本重算。
-- **A3 驗證沒有合理範圍檢查。** 色彩刻度寫錯（Y 值 0–1023 當 0–255）整個 Stage 3 仍 PASS。處理：所有量測值加 sanity bounds，超出即 FAIL。
+- **A3 驗證沒有合理範圍檢查。**（DONE：Stage 3 新增 `measurement_sanity`） 色彩刻度寫錯（Y 值 0–1023 當 0–255）整個 Stage 3 仍 PASS。處理：所有量測值加 sanity bounds，超出即 FAIL。
 
 ### B. 關卡沒擋到該擋的
 - **B1 使用者核准的不是最終成品。** 使用者核准的是 v9 審片版（無調色、無 BGM、無地點卡），Stage 3 才加上這些，之後無人工關卡，只有 Agent QC。處理：Stage 3 加一個人工驗收點。

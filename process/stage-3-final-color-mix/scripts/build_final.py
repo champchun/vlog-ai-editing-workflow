@@ -42,7 +42,7 @@ gate = {"stage1": rep1["overall"], "stage2": rep2["overall"], "storyboard_human"
         "stage2_log_hash": log2["hashes"]["edit_decisions_sha256"] == H_ED, "human_hash": hum["hashes"]["edit_decisions_sha256"] == H_ED}
 assets = {"default_bgm": BGM.exists(), "d_log2_lut": (LUT_DIR/LUTS["D-Log2"]).exists(), "d_log_lut": (LUT_DIR/LUTS["D-Log"]).exists()}
 log("assets", assets, "gate", gate)
-if not (rep1["overall"] in ("PASS","PASS_WITH_WARNINGS") and rep2["overall"]=="PASS" and hum["overall"]=="PASS" and all(v for k,v in gate.items() if "hash" in k)):
+if not (rep1["overall"] in ("PASS","PASS_WITH_WARNINGS") and rep2["overall"] in ("PASS","PASS_WITH_WARNINGS") and hum["overall"]=="PASS" and all(v for k,v in gate.items() if "hash" in k)):
     print("STAGE_3_BLOCKED", gate); sys.exit(2)
 beats = json.load(open(BEATS)); bgm_sha = sha(BGM)
 assert beats["source"]["sha256"] == bgm_sha, "BGM sha mismatch vs beats.json"

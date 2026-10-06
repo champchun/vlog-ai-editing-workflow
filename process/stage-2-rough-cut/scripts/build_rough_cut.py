@@ -112,15 +112,15 @@ checks = {
  "timeline_order_integrity": chk([l["shot_id"] for l in log] == [s["shot_id"] for s in shots], {"input": len(shots), "executed": len(log)}),
  "shot_duration_integrity": chk(not dur_err, {"errors": dur_err}),
  "timeline_duration_integrity": chk(abs(tdiff) < 0.5, {"expected": exp_total, "actual": act_total, "diff": tdiff}),
- "audio_sync_check": chk(abs(tdiff) < 0.5, {"note": "per-shot audio padded/trimmed to shot expected duration; concat total matches video within tolerance; not listened by agent"}),
+ "audio_sync_check": {"result": "NOT_VERIFIED", "evidence": {"why_not_verified": "only total duration equality (diff %.3fs) was checked; no listening or cross-correlation" % tdiff}},
  "semantic_integrity_locked": {"result": "NOT_APPLICABLE", "evidence": {"reason": "Stage 1: no dialogue reorder/delete, no J/L, no audio_segments"}},
  "speed_execution": chk(all(l["speed_applied"] == s["speed"] for l, s in zip(log, shots)), {"slow_motion_shots": sum(1 for s in shots if s["speed"] != 1.0)}),
  "reframe_execution": chk(not any(l["reframe_applied"] for l in log), {"reframed": 0}),
- "color_profile_safety": chk(True, {"lut_applied": 0, "unknown_profile_shots": unknown, "note": "no LUT in Stage 2; D-Log/D-Log2 clips rendered as-is for Stage 3 grading"}),
+ "color_profile_safety": chk(all("lut" not in k["key"] for k in cache.values()), {"lut_applied": 0, "unknown_profile_shots": unknown, "checked": "no render key contains a LUT; clips rendered as-is for Stage 3 grading"}),
  "ending_integrity": chk(log[-1]["shot_id"] == shots[-1]["shot_id"] and log[-1]["status"] == "OK", {"ending": shots[-1]["shot_id"]}),
  "no_unapproved_editorial_change": chk(len(shots) == len(log) and all(l["cut_start"] == s["cut_start"] and l["cut_end"] == s["cut_end"] and l["source_path"] == s["source_path"] for l, s in zip(log, shots)), {"input_shots": len(shots), "executed_shots": len(log)}),
 }
-checks["overall"] = {"result": "FAIL" if any(v["result"] == "FAIL" for v in checks.values()) else "PASS", "evidence": {}}
+checks["overall"] = {"result": "FAIL" if any(v["result"] == "FAIL" for v in checks.values()) else ("PASS_WITH_WARNINGS" if any(v["result"] == "NOT_VERIFIED" for v in checks.values()) else "PASS"), "evidence": {"not_verified": [k for k, v in checks.items() if v["result"] == "NOT_VERIFIED"]}}
 hashes = {"edit_decisions_sha256": H_ED, "coverage_gaps_sha256": H_CG, "story_plan_sha256": H_SP}
 json.dump({"stage": 2, "hashes": hashes, "gate": gate, "cache_hits": sum(1 for r in results if r[1]=="hit"), "elapsed_s": round(time.time()-t_all,1), "shots": log},
           open(OUT/"stage2_execution_log.json","w"), ensure_ascii=False, indent=1)
