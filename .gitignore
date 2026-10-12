@@ -1,0 +1,19 @@
+# macOS / external-drive AppleDouble files
+.DS_Store
+._*
+
+# Private data: originals, location history, people photos, generated outputs
+process/workspace/media/*
+process/workspace/gps/*
+process/workspace/people/
+process/workspace/project-output/*
+process/workspace/temp/*
+
+# Keep folder README files
+!process/workspace/media/README.md
+!process/workspace/gps/README.md
+!process/workspace/project-output/README.md
+!process/workspace/temp/README.md
+
+# Stray top-level workspace folder
+/workspace/
