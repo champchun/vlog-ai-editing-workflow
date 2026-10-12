@@ -201,6 +201,17 @@ def main():
         c["md"] = md = metadata(f)   # cheap; always recomputed so metadata rules can change without redoing ASR/visual
         for s_ in (c["asr"] or {}).get("sentences", []):   # clamp VAD/whisper padding to clip length
             if s_["end"] > md["duration"]: s_["end"] = round(md["duration"], 2); s_["review_reason"] = ((s_["review_reason"] + "; ") if s_["review_reason"] else "") + "end_clamped_to_clip_duration"; s_["transcript_status"] = "uncertain"
+        a_ = c["asr"]
+        if a_:   # post-filter (idempotent): drop ASR prompt echo; flag foreign-script text inside a zh clip
+            keep, dropped = [], list(a_.get("discarded_prompt_echo", []))
+            for s_ in a_["sentences"]:
+                if "繁體中文口語" in s_["text"] or "繁体中文口语" in s_["text"]: dropped.append(dict(s_, discard_reason="initial_prompt_echo (no real speech)"))
+                else:
+                    if re.search(r"[\uac00-\ud7af]", s_["text"]) or (re.fullmatch(r"[A-Za-z .,!?']+", s_["text"]) and a_["language_detected"] == "zh"):
+                        s_["transcript_status"] = "uncertain"; r_ = "foreign_language_text(possible real speech or hallucination; review)"
+                        if r_ not in (s_["review_reason"] or ""): s_["review_reason"] = ((s_["review_reason"] + "; ") if s_["review_reason"] else "") + r_
+                    keep.append(s_)
+            a_["sentences"], a_["discarded_prompt_echo"] = keep, dropped
         g = gps.get(md["filename"])
         md["gps_auxiliary"] = g and dict(local_time_at_gps_location=g.get("local_time_at_gps_location"), gps_location_utc_offset=g.get("gps_location_utc_offset"), lat=g["lat"], lon=g["lon"], method=g["method"], context=g["context"], source="Timeline 4.json matched at clip midpoint", note="auxiliary only; activity_interpolated = straight-line estimate")
         md["clip_id"] = f"V{n:03d}"; md["key"] = key
@@ -262,7 +273,7 @@ def main():
     json.dump(vis_all, open(os.path.join(OUT, "local_visual_candidates.json"), "w"), ensure_ascii=False, indent=1)
     json.dump(dict(clips=[dict(clip_id=c["md"]["clip_id"], file=c["md"]["filename"], language=c["asr"] and c["asr"]["language_detected"],
                                language_probability=c["asr"] and c["asr"]["language_probability"], language_used=c["asr"] and c["asr"]["language_used"],
-                               audio_level=c["asr"] and c["asr"]["audio_level"], audio_events=c["asr"] and c["asr"]["audio_events"], sentences=c["asr"] and c["asr"]["sentences"]) for _, c in vids]),
+                               audio_level=c["asr"] and c["asr"]["audio_level"], audio_events=c["asr"] and c["asr"]["audio_events"], sentences=c["asr"] and c["asr"]["sentences"], discarded_prompt_echo=c["asr"] and c["asr"].get("discarded_prompt_echo")) for _, c in vids]),
               open(os.path.join(OUT, "transcripts.json"), "w"), ensure_ascii=False, indent=1)
     json.dump(queue, open(os.path.join(OUT, "stage0b_review_queue.json"), "w"), ensure_ascii=False, indent=1)
     with open(os.path.join(OUT, "transcript_summary.txt"), "w") as fh:
