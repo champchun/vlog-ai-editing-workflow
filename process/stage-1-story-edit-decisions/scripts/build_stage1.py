@@ -95,6 +95,8 @@ for sid, sc, ev, clip, a, b, role, aud, why, hb in SHOTS:
         warn.append("color_profile unknown")
     if clip in ("V004", "V023"):
         warn.append("畫面偏暗")
+    if clip == "V004":
+        warn.append("原片上下顛倒（rotation 0）；已決定旋轉 180 度")
     if clip == "V009":
         warn.append("音訊未聽查；約 14 秒有快速擺動模糊")
     if clip == "V020":
@@ -105,6 +107,7 @@ for sid, sc, ev, clip, a, b, role, aud, why, hb in SHOTS:
         cut_start=a, cut_end=b, duration=dur, timeline_start=round(t, 3),
         source_sentence_ids=seg_ids(clip, a, b), editorial_reason=why,
         audio_strategy=aud, speed=1.0, reframe=dict(enabled=False, scale=1.0),
+        rotation=180 if clip == "V004" else 0,
         transition_out="cut", quality_warning=warn,
         color_profile=c["color_profile"], fps=c["fps"],
         is_broll=aud == "ambient",
@@ -251,6 +254,7 @@ chk("semantic_integrity", True, "no sentence reordering, deletion or J/L cut; or
 chk("adjacency_review_complete", len(adj) == len(shots) - 1, f"{len(adj)} boundaries reviewed")
 chk("coverage_gap_accounting", True, f"{len(gaps)} gaps recorded")
 chk("chapter_engagement", all(sc["engagement_change"] for sc in SCENES), "every scene has engagement_change")
+chk("rotation_decisions", all(s["rotation"] in (0, 180) for s in shots), "rotation=180 only for V004 (upside-down source, user request 2026-10-12)")
 chk("reframe_subject_coverage", all(not s["reframe"]["enabled"] for s in shots), "no reframe used")
 chk("hero_scene_director_review", len(hero_review) == len(heroes), "all 6 candidates reviewed from Original Media frames; audio not heard", warn=True)
 chk("ending_visual_quality", True, "V029 clear close-up, lit by heat lamp")
