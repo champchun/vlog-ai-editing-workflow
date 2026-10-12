@@ -72,13 +72,28 @@ class H(SimpleHTTPRequestHandler):
         if self.path == "/api/save":
             cid = data.get("clip_id")
             if cid not in {c["clip_id"] for c in load(MASTER, [])}: return self.js({"error": "unknown clip_id"}, 400)
-            fb = data.get("summary_feedback") or {}; act = fb.get("action", "NONE"); act = act if act in ACTIONS else "NONE"
-            status = data.get("status", "NOT_REVIEWED"); status = status if status in STATUSES else "NOT_REVIEWED"
-            if (act != "NONE" or (fb.get("text") or "").strip()) and status == "NOT_REVIEWED": status = "NO_PREFERENCE"   # summary-only never implies a keep
-            db = load(HUMAN, {})
-            broll = bool(data["broll"]) if "broll" in data else bool((db.get(cid) or {}).get("broll", False))   # keep existing flag when a payload omits it
-            if broll and status == "NOT_REVIEWED": status = "NO_PREFERENCE"                  # a B-roll flag alone never means "keep"
-            db[cid] = dict(status=status, broll=broll, reason=data.get("reason", ""), summary_feedback=dict(action=act, text=fb.get("text", ""), target_fields=fb.get("target_fields", ["visual_summary"]),
+            db = load(HUMAN, {}); old = db.get(cid) or {}
+            fb = data.get("summary_feedback") or old.get("summary_feedback") or {}; act = fb.get("action", "NONE"); act = act if act in ACTIONS else "NONE"
+            status = data["status"] if "status" in data else old.get("status", "NOT_REVIEWED"); status = status if status in STATUSES else "NOT_REVIEWED"
+            broll = bool(data["broll"]) if "broll" in data else bool(old.get("broll", False))   # keep existing flag when a payload omits it
+            if (act != "NONE" or (fb.get("text") or "").strip() or broll) and status == "NOT_REVIEWED": status = "NO_PREFERENCE"   # summary-only / B-roll flag never implies a keep
+            # per-segment marks (merged into existing ones, never wiping other segments)
+            valid = {s["segment_id"] for c in load(MASTER, []) if c["clip_id"] == cid for s in c.get("segments", [])}
+            segs = dict(old.get("segment_reviews") or {})
+            for sid, s in (data.get("segment_reviews") or {}).items():
+                if sid in valid:
+                    st = s.get("status", "NOT_REVIEWED"); st = st if st in STATUSES else "NOT_REVIEWED"
+                    segs[sid] = dict(status=st, broll=bool(s.get("broll", False)), updated_at=datetime.now(timezone.utc).isoformat())
+            source = old.get("status_source") or ("manual" if old.get("status", "NOT_REVIEWED") != "NOT_REVIEWED" else "none")
+            if "status" in data and status != "NOT_REVIEWED": source = "manual"
+            if "status" in data and status == "NOT_REVIEWED" and not data.get("segment_reviews"): source = "none"
+            if data.get("segment_reviews") and source != "manual":      # derive the clip-level status from its segments until the user sets one by hand
+                marked = [v for v in segs.values() if v["status"] != "NOT_REVIEWED"]
+                if any(v["status"] == "CANDIDATE" for v in marked): status, broll, source = "CANDIDATE", False, "derived_from_segments"
+                elif any(v["status"] == "NO_PREFERENCE" and v["broll"] for v in marked): status, broll, source = "NO_PREFERENCE", True, "derived_from_segments"
+                elif len(marked) == len(valid) and marked and all(v["status"] == "SKIP" for v in marked): status, broll, source = "SKIP", False, "derived_from_segments"
+            db[cid] = dict(status=status, broll=broll, status_source=source, reason=data.get("reason", old.get("reason", "")), segment_reviews=segs,
+                           summary_feedback=dict(action=act, text=fb.get("text", ""), target_fields=fb.get("target_fields", ["visual_summary"]),
                            affects_selection=False, updated_at=fb.get("updated_at") or datetime.now(timezone.utc).isoformat()))
             atomic(HUMAN, db); atomic(MASTER, merged())      # keep master_footage_review.json (Stage 1 handoff) in sync
             return self.js({"status": "ok", "saved_status": status})

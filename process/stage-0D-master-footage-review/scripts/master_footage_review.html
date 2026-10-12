@@ -23,7 +23,7 @@ main{max-width:1400px;margin:0 auto;padding:16px 20px}
 .warn-list{margin:6px 0;padding-left:18px;color:#fcd34d;font-size:13px}
 .review-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid #374151}
 .field{display:grid;gap:6px}.field.full{grid-column:1/-1}textarea{width:100%;min-height:70px;resize:vertical}
-.kv{font-size:13px;line-height:1.6}.kv b{color:#d1d5db}
+.kv{font-size:13px;line-height:1.6}.kv b{color:#d1d5db}.segbtn{margin:2px;padding:3px 8px;font-size:12px}
 details{margin:6px 0}summary{cursor:pointer;color:#93c5fd}
 .empty{padding:36px;text-align:center;color:#9ca3af}
 #player{position:fixed;right:16px;bottom:16px;width:440px;max-width:calc(100vw - 32px);background:#0b1020;border:1px solid #4b5563;border-radius:12px;padding:8px;z-index:20;box-shadow:0 8px 30px #000a}
@@ -114,6 +114,7 @@ function card(c){
     <div class="kv"><b>人物：</b>${esc(list(c.visible_people))}｜<b>動物：</b>${esc(list(c.visible_animals))}<br><b>物件：</b>${esc(list(c.visual_objects))}<br><b>動作：</b>${esc(list(c.visual_actions))}<br><b>反應：</b>${esc(c.reaction)}</div>
     <div class="kv"><b>聲音／逐字稿（原文，僅描述聲音）：</b>${esc(c.audio_summary)}</div>
     <div class="kv"><b>相關事件：</b>${ev}</div>
+    ${(c.segments||[]).length?`<div class="kv"><b>分段重點（點選跳到該段）：</b> ${c.segments.map(s=>{const r=(h.segment_reviews||{})[s.segment_id];const m=r?(r.broll?'B-roll':r.status==='CANDIDATE'?'A-roll':r.status==='SKIP'?'不要':''):'';return `<button class="segbtn" data-t="${s.start}">${s.index}. ${esc(s.label)}（${s.start}–${s.end}s）${m?' ['+m+']':''}</button>`}).join(' ')}</div>`:''}
     ${c.review_warnings.length?`<ul class="warn-list">${c.review_warnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>`:''}
     <div class="review-grid">
       <label class="field"><span>摘要回饋</span><select class="act">${opts(L.action,fb.action||'NONE')}</select></label>
@@ -133,7 +134,7 @@ function render(){
   if(cur)root.querySelector(`.card[data-id="${cur}"]`)?.classList.add('playing');
 }
 function bind(el){
-  el.querySelectorAll('img[data-t]').forEach(i=>i.addEventListener('click',()=>play(el.dataset.id,parseFloat(i.dataset.t))));
+  el.querySelectorAll('img[data-t],.segbtn[data-t]').forEach(i=>i.addEventListener('click',()=>play(el.dataset.id,parseFloat(i.dataset.t))));
   el.querySelectorAll('select,textarea').forEach(x=>{x.addEventListener('input',()=>sched(el));x.addEventListener('change',()=>sched(el))});
 }
 function play(id,t){

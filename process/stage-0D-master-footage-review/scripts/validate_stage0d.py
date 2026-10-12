@@ -56,6 +56,14 @@ try:
     ck("review_relationship_computed", d["V003"]["review_relationship"] == "AGREE_KEEP" and d["V020"]["review_relationship"] == "AI_SKIP_HUMAN_KEEP", f"V003 {d['V003']['review_relationship']}; V020 (AI skip, human keep) {d['V020']['review_relationship']}")
     ck("ai_summary_not_overwritten", d["V002"]["visual_summary"] == clips[1]["visual_summary"] or d["V002"]["visual_summary"] == next(c for c in clips if c["clip_id"] == "V002")["visual_summary"], "AI visual_summary identical after human feedback")
     ck("broll_flag_persists_and_is_kept", d["V020"]["human_review"].get("broll") is True and d["V003"]["human_review"].get("broll") is False, "B-roll flag saved, survives restart, and is not erased by a later save without it")
+    seg_ids = [s["segment_id"] for s in next(c for c in clips if c["clip_id"] == "V022")["segments"]]
+    post("/api/save", dict(clip_id="V022", segment_reviews={seg_ids[1]: dict(status="CANDIDATE", broll=False)}))
+    post("/api/save", dict(clip_id="V022", segment_reviews={seg_ids[3]: dict(status="NO_PREFERENCE", broll=True)}))
+    srv.terminate(); srv.wait(); time.sleep(0.5); srv = subprocess.Popen([sys.executable, OUT + "/app.py"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(1.5)
+    d2 = {c["clip_id"]: c for c in get("/api/data")}; sr = d2["V022"]["human_review"]["segment_reviews"]
+    ck("segment_marks_persist_and_merge", sr.get(seg_ids[1], {}).get("status") == "CANDIDATE" and sr.get(seg_ids[3], {}).get("broll") is True and d2["V022"]["human_review"]["status"] == "CANDIDATE", "two segment marks saved separately, kept after restart; clip status derived (A-roll segment wins)")
+    ck("manual_clip_status_not_overridden_by_segments", (post("/api/save", dict(clip_id="V022", status="SKIP", broll=False)) and post("/api/save", dict(clip_id="V022", segment_reviews={seg_ids[0]: dict(status="CANDIDATE", broll=False)})) and {c["clip_id"]: c for c in get("/api/data")}["V022"]["human_review"]["status"] == "SKIP"), "after the user sets the clip status by hand, segment marks no longer change it")
+    ck("segments_defined", sum(1 for c in clips if c["segments"]) >= 10 and all(s["end"] > s["start"] and s["end"] <= c["duration"] + 0.01 for c in clips for s in c["segments"]), f"{sum(1 for c in clips if c['segments'])} clips split into {sum(len(c['segments']) for c in clips)} segments, all within clip duration")
     m = J(tmp + "/master_footage_review.json"); ck("master_json_synced_for_stage1", next(c for c in m if c["clip_id"] == "V003")["human_review"]["status"] == "MUST_KEEP", "master_footage_review.json updated on save")
     case = post("/api/case", dict(clip_id="V009", time_range=[14, 14], problem="測試", expected_check="x")); ck("review_case_saved", case["count"] == 1, "review_cases.json append works")
     req = urllib.request.Request(U + "/proxy/V002_proxy.mp4", headers={"Range": "bytes=0-99"}); resp = urllib.request.urlopen(req)

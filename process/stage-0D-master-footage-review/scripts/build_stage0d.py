@@ -2,7 +2,7 @@
 """Stage 0D builder (adapted from examples/build_stage0d.py to this project's schema: lists/dicts, relative paths, no Stage 1 dependency)."""
 import json, os, sys, subprocess, shutil, hashlib
 sys.path.insert(0, os.path.dirname(__file__))
-from clip_reviews import REV, HERO_T, HERO_WHY, TRANS
+from clip_reviews import REV, HERO_T, HERO_WHY, TRANS, SEGMENTS
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 WS = os.path.join(ROOT, "workspace"); P = WS + "/project-output"; S0C = P + "/stage0c_output"; OUT = P + "/stage0d_master_review"
 KIT = os.path.join(ROOT, "stage-0D-master-footage-review")
@@ -66,9 +66,10 @@ for c in cat:
         reaction=rx, has_reaction=has_react, audio_transcript=audio,
         audio_summary=("；".join(f"[{a['start']:.0f}-{a['end']:.0f}s]{a['text']}" + (f"（參考翻譯：{a['zh_reference']}，未確認）" if a["zh_reference"] else "") + ("（不確定）" if a["status"] == "uncertain" else "") for a in audio) or "沒有偵測到可辨識的語音"),
         events=ev_by.get(cid, []), hero_scenes=[dict(h, status_label=STAT[h["agent_status"]]) for h in hs_by.get(cid, [])],
+        segments=[dict(segment_id=f"{cid}-S{i+1}", index=i + 1, start=s, end=min(e, dur), label=l) for i, (s, e, l) in enumerate(SEGMENTS.get(cid, []))],
         review_warnings=warnings,
         ai_review=dict(recommendation=rec, priority=pri, reason=why, basis="視覺複核、事件價值、Hero 複核、畫質、重複性；不是最終選用決定"),
-        human_review=dict(status="NOT_REVIEWED", reason="", summary_feedback=dict(action="NONE", text="", target_fields=[], affects_selection=False, updated_at=None)),
+        human_review=dict(status="NOT_REVIEWED", reason="", broll=False, segment_reviews={}, summary_feedback=dict(action="NONE", text="", target_fields=[], affects_selection=False, updated_at=None)),
         review_relationship="HUMAN_NOT_REVIEWED"))
 # ---- proxies: 720p H.264/AAC, timing 1:1 ----
 pm = []
