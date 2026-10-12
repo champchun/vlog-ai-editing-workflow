@@ -55,6 +55,22 @@ def make_cube(f, path, n=33, cg=1.0, alpha=0.0):
                 L.append(f"{rgb[0]:.6f} {rgb[1]:.6f} {rgb[2]:.6f}")
     path.write_text("\n".join(L) + "\n")
 
+def apply_np(img, f, cg, alpha):
+    y = luma(img); y2 = np.vectorize(f)(y)
+    ratio = np.clip(y2 / np.maximum(y, 1e-3), 1.0, 6.0)
+    k = np.minimum(cg * (ratio ** alpha if alpha else 1.0), 3.0)[..., None]
+    return np.clip(y2[..., None] + k * (img - y[..., None]), 0, 1)
+
+def sat_ratio(a, b):
+    def S(x):
+        mx = x.max(-1); mn = x.min(-1); return np.where(mx > 1e-4, (mx - mn) / np.maximum(mx, 1e-4), 0), mx
+    Sa, Va = S(a); Sb, _ = S(b); m = (Sa > 0.12) & (Va > 0.04)
+    if m.sum() < 2000: m = Va > 0.04
+    return float(Sb[m].mean() / Sa[m].mean())
+
+SAT_TARGET = {"S009": 1.2}          # default 0.95: keep colour as saturated as the LUT-only picture
+SKIP_CAL = {"S001", "S010"}         # S001 hand-tuned (alpha .85), S010 sky already ~1.26
+
 grade = {}
 for s in ed:
     sid = s["shot_id"]; t, _, _, _, roi, why0 = PLAN[sid]; roi = ROI_OVERRIDE.get(sid, roi)
@@ -93,7 +109,15 @@ for s in ed:
     xs = np.linspace(0, 1, 2001); ys = np.array([f(v) for v in xs])
     assert np.all(np.diff(ys) >= -1e-9), f"{sid}: curve not monotone"
     assert ys.max() <= CAP / 100 + 1e-6, f"{sid}: curve exceeds cap"
-    tmp = CUBE_DIR / "tmp.cube"; make_cube(f, tmp, cg=cg, alpha=ov.get('alpha', 0.0))
+    alpha = ov.get("alpha", 0.0)
+    if sid not in SKIP_CAL:                                  # calibrate chroma so saturation stays ~ as in the LUT-only picture
+        tgt = SAT_TARGET.get(sid, 0.95); best = None
+        grid = [(1.0, a_) for a_ in np.arange(0, 1.25, 0.05)] if sid != "S009" else [(c_, 0.0) for c_ in np.arange(0.3, 1.01, 0.05)]
+        for c_, a_ in grid:
+            r_ = sat_ratio(base, apply_np(base, f, c_, a_)); err = abs(r_ - tgt)
+            if best is None or err < best[0]: best = (err, c_, a_, r_)
+        cg, alpha = float(best[1]), float(best[2]); ov = dict(ov, cg=cg, alpha=alpha, calibrated_sat_ratio=round(best[3], 2))
+    tmp = CUBE_DIR / "tmp.cube"; make_cube(f, tmp, cg=cg, alpha=alpha)
     hsh = hashlib.sha256(tmp.read_bytes()).hexdigest()[:12]; cube = CUBE_DIR / f"{sid}_curve_{hsh}.cube"; tmp.rename(cube)
     vf = [f"lut3d=file='{cube}':interp=tetrahedral"]
     img = frame(s, t, vf); after = stats(img, roi); ya = luma(img)
@@ -101,7 +125,7 @@ for s in ed:
     if roi: after["face_p90"] = round(float(np.percentile(ya[int(roi[1]*h_):int(roi[3]*h_), int(roi[0]*w_):int(roi[2]*w_)], 90)) * 100, 1)
     grade[sid] = dict(base_time_in_shot=t, base_time_source=round(s["cut_start"] + t, 3), why=why0, method="luma_curve_monotone_cube", anchor=anchor,
                       targets=dict(black_point=black_out, cap=CAP, **({"face_p90": m_out} if anchor == "face_p90" else {"anchor_median": m_out})),
-                      before=before, after=after, params=dict(chroma_gain=cg, override=ov or None, points_ire=[(round(a, 1), round(b, 1)) for a, b in pts], monotone_checked=True, cube=cube.name),
+                      before=before, after=after, params=dict(chroma_gain=cg, chroma_alpha=alpha, override=ov or None, points_ire=[(round(a, 1), round(b, 1)) for a, b in pts], monotone_checked=True, cube=cube.name),
                       filters=vf, skin_roi=roi, note="")
     print(sid, anchor, [(round(a), round(b)) for a, b in pts], "after", {k: v for k, v in after.items() if k != "clip_pct_over_98"}, flush=True)
 json.dump(grade, open(TMP / "grade.json", "w"), ensure_ascii=False, indent=1)
