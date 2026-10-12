@@ -354,10 +354,11 @@ v["overall"] = chk(overall, "see warnings")
 json.dump(dict(overall=overall, checks=v, hashes=exec_log["hashes"], final_runtime=fq["duration"], warnings=[
     "Audio never listened by the agent (S001 speech, S010 children's voices, S011 laugh, BGM level/ducking); user audition required",
     "BGM sections chosen from beats.json energy only (AUTOMATIC_UNREVIEWED)", "No location cards: no reliable place names",
-    "Per-shot grade from director-chosen base frames (grade_per_shot.py): black/median/white mapped to IRE targets; face shots driven by skin ROI (hand-drawn boxes, S001/S003/S005/S009/S011)",
-    "S001 skin only reaches ~31 IRE (target 50): raising it further blew out the white wall, so the grade is limited by scene median<=65 / clip<=1%",
-    "Lifted shadows (S001, S002, S004, S013, S017) increase noise; bitrate rose from ~12 to ~24 Mbps", "S010 and S017 look vivid/hot after grading; judge by eye",
-    "Adjacent luma jumps >45 remain at S004->S005 and S011->S012 (see qc.adjacent_luma_jumps_gt45)"],
+    "Grade follows the user's YouTube-clean principle (grade_youtube.py): black p1 ~2 IRE, face highlights (ROI p90) ~67 IRE, highlights p99 ~93 IRE with hard cap 95, S-curve contrast; hue-preserving luma-only curve baked into per-shot .cube",
+    "Face ROIs are hand-drawn boxes for S001/S003/S005/S009/S011 only; other shots are anchored on scene median",
+    "Black level is not 0-5 IRE in S010 (~20 IRE, sky-only frame has no real blacks) ; S009 scene median fell to ~22 IRE after removing haze (dark, murky background)",
+    "Strong lift of shadows (S001, S002, S004, S013) amplifies noise; judge by eye",
+    "Adjacent luma jumps >45 remain (see qc.adjacent_luma_jumps_gt45), notably S009 -> S010"],
     qc={k: v_ for k, v_ in fq.items() if k != "post_render"}), open(OUT / "stage3_validation_report.json", "w"), ensure_ascii=False, indent=1, default=str)
 print(json.dumps(dict(overall=overall, runtime=fq["duration"], lufs=fq["integrated_lufs"], tp=fq["true_peak_dbtp"], luts=len(lut_clips),
                       exposure_adj=len(exec_log["exposure_adjusted_shots"]), wb_adj=len(exec_log["wb_adjusted_shots"]), jumps=jumps, flags=exp_flags), ensure_ascii=False))
