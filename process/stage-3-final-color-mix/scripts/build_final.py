@@ -136,13 +136,13 @@ def vf_for(x):
     if x["lut"]: p.append(f"lut3d=file='{x['lut']}':interp=tetrahedral")
     g_ = GRADE.get(s["shot_id"])
     if g_:
-        p += g_["filters"]
-        p.append(f"eq=saturation={a['saturation']}")
+        p += g_["filters"]                                  # soft grade only: no extra saturation, no WB nudge
+        a["saturation"] = 1.0; a["rb_gain"] = a["bb_gain"] = 1.0; a["notes"].append("soft per-shot grade: scene WB/saturation nudges disabled")
     else:
         p.append(f"eq=brightness={a['brightness']}:saturation={a['saturation']}")
     if a["rb_gain"] != 1.0 or a["bb_gain"] != 1.0: p.append(f"colorchannelmixer=rr={a['rb_gain']}:bb={a['bb_gain']}")
     if s["speed"] != 1.0: p.append(f"setpts={1/s['speed']}*PTS")
-    p += [f"scale={W}:{H}:flags=lanczos", f"fps={FPS}", "setsar=1", "format=yuv420p"]
+    p += [f"scale={W}:{H}:flags=bicubic", f"fps={FPS}", "setsar=1", "format=yuv420p"]
     return ",".join(p)
 def render_v(x):
     s = x["s"]; sid = s["shot_id"]; out = TMP / "v" / f"{sid}.mp4"; t0 = time.time()
@@ -354,11 +354,12 @@ v["overall"] = chk(overall, "see warnings")
 json.dump(dict(overall=overall, checks=v, hashes=exec_log["hashes"], final_runtime=fq["duration"], warnings=[
     "Audio never listened by the agent (S001 speech, S010 children's voices, S011 laugh, BGM level/ducking); user audition required",
     "BGM sections chosen from beats.json energy only (AUTOMATIC_UNREVIEWED)", "No location cards: no reliable place names",
-    "Grade follows the user's YouTube-clean principle (grade_youtube.py): black p1 ~2 IRE, face highlights (ROI p90) ~67 IRE, highlights p99 ~93 IRE with hard cap 95, S-curve contrast; hue-preserving luma-only curve baked into per-shot .cube",
+    "Grade follows the user's soft luma-curve spec (grade_curve.py): strictly monotone 5-point curve (black 0->5, shadows on the diagonal, midtones lifted so face highlights ~67 IRE, highlights <=91 with soft roll-off to a 95 cap); luma only, chroma untouched, no extra saturation/WB nudge, no sharpening/clarity/local contrast, bicubic downscale",
     "Face ROIs are hand-drawn boxes for S001/S003/S005/S009/S011 only; other shots are anchored on scene median",
-    "Black level is not 0-5 IRE in S010 (~20 IRE, sky-only frame has no real blacks) ; S009 scene median fell to ~22 IRE after removing haze (dark, murky background)",
-    "Strong lift of shadows (S001, S002, S004, S013) amplifies noise; judge by eye",
-    "Adjacent luma jumps >45 remain (see qc.adjacent_luma_jumps_gt45), notably S009 -> S010"],
+    "Measured black p1 after grade is ~7-17 IRE (not 0-5) in most shots because the lifted black point and mid lift raise the darkest pixels; S009/S010 ~30/58 IRE (haze / sky-only frames)",
+    "Very dark shots (S002, S004, S013, S017) are lifted with gain capped at ~3.5x; noise will be visible",
+    "Low-contrast result reads pale/grey in S001, S009, S010; judge by eye",
+    "Adjacent luma jumps >45 remain (see qc.adjacent_luma_jumps_gt45)"],
     qc={k: v_ for k, v_ in fq.items() if k != "post_render"}), open(OUT / "stage3_validation_report.json", "w"), ensure_ascii=False, indent=1, default=str)
 print(json.dumps(dict(overall=overall, runtime=fq["duration"], lufs=fq["integrated_lufs"], tp=fq["true_peak_dbtp"], luts=len(lut_clips),
                       exposure_adj=len(exec_log["exposure_adjusted_shots"]), wb_adj=len(exec_log["wb_adjusted_shots"]), jumps=jumps, flags=exp_flags), ensure_ascii=False))
