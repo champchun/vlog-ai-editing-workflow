@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 0D｜全素材審片</title>
+<style>
+:root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif}
+body{margin:0;background:#111827;color:#f3f4f6;padding-bottom:300px}
+header{position:sticky;top:0;z-index:10;padding:12px 20px;background:rgba(17,24,39,.97);border-bottom:1px solid #374151}
+h1{margin:0 0 8px;font-size:20px}.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select,textarea,input,button{box-sizing:border-box;border:1px solid #4b5563;border-radius:8px;background:#1f2937;color:#f9fafb;padding:8px;font:inherit}
+button{cursor:pointer}button:hover{background:#374151}
+main{max-width:1400px;margin:0 auto;padding:16px 20px}
+.card{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:18px;margin-bottom:16px;padding:14px;background:#1f2937;border:1px solid #374151;border-radius:14px}
+.card.playing{border-color:#fbbf24}
+.hero{width:100%;aspect-ratio:16/9;object-fit:cover;background:#0b1020;border-radius:10px;cursor:pointer}
+.strip{display:flex;gap:6px;margin-top:8px;overflow-x:auto}.strip figure{margin:0;flex:none}.strip img{width:116px;aspect-ratio:16/9;object-fit:cover;border-radius:6px;cursor:pointer;display:block}
+.strip figcaption{font-size:11px;color:#9ca3af;text-align:center}
+.meta,.hint,.save-state{color:#9ca3af;font-size:13px}.summary{white-space:pre-wrap;line-height:1.55}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.badge{padding:3px 10px;border-radius:12px;background:#374151;font-size:12px}
+.badge.warn{background:#7c2d12}.badge.hscene{background:#14532d}
+.warn-list{margin:6px 0;padding-left:18px;color:#fcd34d;font-size:13px}
+.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid #374151}
+.field{display:grid;gap:6px}.field.full{grid-column:1/-1}textarea{width:100%;min-height:70px;resize:vertical}
+.kv{font-size:13px;line-height:1.6}.kv b{color:#d1d5db}
+details{margin:6px 0}summary{cursor:pointer;color:#93c5fd}
+.empty{padding:36px;text-align:center;color:#9ca3af}
+#player{position:fixed;right:16px;bottom:16px;width:440px;max-width:calc(100vw - 32px);background:#0b1020;border:1px solid #4b5563;border-radius:12px;padding:8px;z-index:20;box-shadow:0 8px 30px #000a}
+#player video{width:100%;border-radius:8px;background:#000;aspect-ratio:16/9}
+#player .row{display:flex;gap:6px;align-items:center;margin-top:6px}#player .title{flex:1;font-size:13px;color:#d1d5db;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:850px){.card,.review-grid{grid-template-columns:1fr}#player{width:calc(100vw - 32px)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Stage 0D｜全素材審片</h1>
+  <div class="toolbar">
+    <label for="filter">篩選：</label>
+    <select id="filter">
+      <option value="ALL">全部素材</option>
+      <option value="NOT_REVIEWED">尚未審查</option>
+      <optgroup label="AI 建議">
+        <option value="AI_STRONG">AI 強烈推薦</option><option value="AI_CAND">AI 建議考慮</option><option value="AI_SKIP">AI 可能略過</option>
+      </optgroup>
+      <optgroup label="人工選片意願">
+        <option value="NO_PREFERENCE">不指定是否選用</option><option value="CANDIDATE">列為候選</option><option value="IMPORTANT">重要素材</option>
+        <option value="MUST_REVIEW">必須再看</option><option value="MUST_KEEP">必須保留</option><option value="SKIP">略過</option>
+      </optgroup>
+      <optgroup label="其他">
+        <option value="DISAGREE">AI／人工意見不同</option><option value="LONG">長影片（60 秒以上）</option>
+        <option value="PEOPLE">有人物</option><option value="ANIMAL">有動物</option><option value="REACTION">有反應</option>
+      </optgroup>
+    </select>
+    <button id="quick">檢查 AI 建議略過的素材</button>
+    <button id="kbStart">開始鍵盤快速審片</button><a href="/quick_review.html" style="color:#93c5fd">→ 全螢幕「快速滑片」</a>
+    <span id="count" class="meta"></span>
+  </div>
+  <div class="hint" id="kbHint">快速審片鍵：← A-roll（列為候選）｜→ B-roll（標記可當 B-roll，不指定是否選用）｜↓ 不要（略過）｜↑ 上一支｜Backspace 還原成尚未審查。在文字框內打字時不會觸發。</div>
+</header>
+<main id="clips"><div class="empty">正在載入審片資料……</div></main>
+
+<aside id="player">
+  <video id="vid" controls playsinline preload="metadata"></video>
+  <div class="row"><button id="prev">上一支</button><span class="title" id="ptitle">點選影格開始播放</span><button id="next">下一支</button></div>
+  <div class="row"><button id="caseBtn" title="記錄漏掉的動作、辨識錯誤或重要聲音">回報問題</button><span class="meta" id="ptime"></span></div>
+</aside>
+
+<script>
+const L={
+ rec:{STRONG_CANDIDATE:'強烈推薦',CANDIDATE:'建議考慮',OPTIONAL:'可選素材',LIKELY_SKIP:'可能略過',TECHNICAL_REJECT:'技術不合格'},
+ pri:{HIGH:'高',MEDIUM:'中',LOW:'低'},
+ status:{NOT_REVIEWED:'尚未審查',NO_PREFERENCE:'不指定是否選用',CANDIDATE:'列為候選',IMPORTANT:'重要素材',MUST_REVIEW:'必須再看',MUST_KEEP:'必須保留',SKIP:'略過'},
+ action:{NONE:'不修改',APPEND:'補充內容',CORRECT:'修正錯誤',REPLACE:'改寫摘要'},
+ rel:{AGREE_KEEP:'AI 與人工都想留',AGREE_SKIP:'AI 與人工都略過',AI_KEEP_HUMAN_SKIP:'AI 想留、人工略過',AI_SKIP_HUMAN_KEEP:'AI 想略過、人工想留（Stage 1 會特別檢查）',HUMAN_NO_PREFERENCE:'人工不指定',HUMAN_NOT_REVIEWED:'人工尚未審查'},
+ hero:{CONFIRMED:'Agent 複核確認',REJECTED:'Agent 複核否決',NEEDS_MORE_REVIEW:'尚待複核'}
+};
+let all=[],cur=null,quickMode=false;const timers=new Map();
+const $=id=>document.getElementById(id),vid=$('vid');
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const opts=(m,s)=>Object.entries(m).map(([v,t])=>`<option value="${v}"${v===s?' selected':''}>${t}</option>`).join('');
+const list=v=>Array.isArray(v)&&v.length?v.join('、'):'無';
+const fmt=s=>{s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const KEEP=['STRONG_CANDIDATE','CANDIDATE','OPTIONAL'];
+
+function match(c,f){
+  const st=c.human_review?.status||'NOT_REVIEWED',rec=c.ai_review.recommendation;
+  if(quickMode)return (rec==='LIKELY_SKIP'||rec==='TECHNICAL_REJECT'||c.ai_review.priority==='LOW')&&st==='NOT_REVIEWED';
+  switch(f){case'ALL':return true;case'AI_STRONG':return rec==='STRONG_CANDIDATE';case'AI_CAND':return rec==='CANDIDATE';
+   case'AI_SKIP':return rec==='LIKELY_SKIP'||rec==='TECHNICAL_REJECT';
+   case'DISAGREE':return c.review_relationship==='AI_KEEP_HUMAN_SKIP'||c.review_relationship==='AI_SKIP_HUMAN_KEEP';
+   case'LONG':return c.duration>=60;case'PEOPLE':return c.visible_people.some(p=>!p.startsWith('未確認'))||c.visible_people.length>0;
+   case'ANIMAL':return c.visible_animals.length>0;case'REACTION':return c.has_reaction;default:return st===f}
+}
+function card(c){
+  const h=c.human_review||{},fb=h.summary_feedback||{};
+  const strip=[{img:c.hero_frame,ts:c.hero_time,label:'代表'},...c.contact_strip.map(s=>({img:s.img,ts:s.ts,label:fmt(s.ts)}))];
+  const hs=c.hero_scenes.map(x=>`<span class="badge hscene">Hero Scene ${esc(x.candidate_id)}：${esc(L.hero[x.agent_status])}（${x.start}–${x.end} 秒，僅為候選，非正式入選）</span>`).join('');
+  const ev=c.events.map(e=>`${esc(e.event_id)} ${esc(e.title)}`).join('；')||'未形成事件';
+  return `<article class="card" data-id="${c.clip_id}">
+  <section>
+    <img class="hero" src="frames/${encodeURIComponent(c.hero_frame)}" data-t="${c.hero_time}" title="點選播放" loading="lazy">
+    <div class="strip">${strip.map(s=>`<figure><img src="frames/${encodeURIComponent(s.img)}" data-t="${s.ts}" loading="lazy"><figcaption>${s.label}</figcaption></figure>`).join('')}</div>
+    <div class="hint">${esc(c.hero_basis)}</div>
+  </section>
+  <section>
+    <h2 style="margin:0">${esc(c.filename)}</h2>
+    <div class="meta">${c.clip_id}｜拍攝：${esc((c.capture_time_local_at_gps_location||c.creation_time_utc).replace('T',' ').slice(0,19))}（GPS 所在地當地時間 ${esc(c.gps_location_utc_offset||'')}）｜長度 ${c.duration.toFixed(1)} 秒｜${esc(c.resolution)}｜${c.fps} fps｜色彩：${esc(c.color_profile)}</div>
+    <div class="badges"><span class="badge">AI：${L.rec[c.ai_review.recommendation]}</span><span class="badge">優先級：${L.pri[c.ai_review.priority]}</span>
+      <span class="badge">人工：${L.status[h.status||'NOT_REVIEWED']}</span><span class="badge">${esc(L.rel[c.review_relationship])}</span>${hs}</div>
+    <h3 style="margin:6px 0">AI 畫面摘要</h3><div class="summary">${esc(c.visual_summary)}</div>
+    ${fb.text?`<p class="summary"><b>人工${esc(L.action[fb.action])}：</b>${esc(fb.text)}<span class="hint">（使用者補充，不覆寫 AI 原文）</span></p>`:''}
+    <p class="kv"><b>AI 理由：</b>${esc(c.ai_review.reason)}</p>
+    <div class="kv"><b>人物：</b>${esc(list(c.visible_people))}｜<b>動物：</b>${esc(list(c.visible_animals))}<br><b>物件：</b>${esc(list(c.visual_objects))}<br><b>動作：</b>${esc(list(c.visual_actions))}<br><b>反應：</b>${esc(c.reaction)}</div>
+    <div class="kv"><b>聲音／逐字稿（原文，僅描述聲音）：</b>${esc(c.audio_summary)}</div>
+    <div class="kv"><b>相關事件：</b>${ev}</div>
+    ${c.review_warnings.length?`<ul class="warn-list">${c.review_warnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>`:''}
+    <div class="review-grid">
+      <label class="field"><span>摘要回饋</span><select class="act">${opts(L.action,fb.action||'NONE')}</select></label>
+      <label class="field"><span>B-roll 標記（不代表要選用）</span><label><input type="checkbox" class="broll"${h.broll?' checked':''}> 可當 B-roll</label></label>
+      <label class="field"><span>選片意願</span><select class="st">${opts(L.status,h.status||'NOT_REVIEWED')}</select></label>
+      <label class="field full"><span>補充或修正內容</span><textarea class="txt" placeholder="只補充內容不代表要選用；未指定選片意願時會保存為「不指定是否選用」。">${esc(fb.text||'')}</textarea></label>
+      <label class="field full"><span>選片理由（只有選片意願需要時才填）</span><textarea class="why" placeholder="例如：這是唯一拍到完整反應的素材。">${esc(h.reason||'')}</textarea></label>
+      <div class="field full"><span class="hint">摘要回饋與選片意願分開保存；補充摘要不會自動變成候選或必須保留。</span><span class="save-state">尚未修改</span></div>
+    </div>
+  </section></article>`;
+}
+function render(){
+  const f=$('filter').value;const cs=all.filter(c=>match(c,f));
+  $('count').textContent=(quickMode?'【檢查 AI 建議略過的素材】':'')+`顯示 ${cs.length}／${all.length} 支影片`;
+  const root=$('clips');root.innerHTML=cs.length?cs.map(card).join(''):'<div class="empty">沒有符合條件的素材。</div>';
+  root.querySelectorAll('.card').forEach(bind);
+  if(cur)root.querySelector(`.card[data-id="${cur}"]`)?.classList.add('playing');
+}
+function bind(el){
+  el.querySelectorAll('img[data-t]').forEach(i=>i.addEventListener('click',()=>play(el.dataset.id,parseFloat(i.dataset.t))));
+  el.querySelectorAll('select,textarea').forEach(x=>{x.addEventListener('input',()=>sched(el));x.addEventListener('change',()=>sched(el))});
+}
+function play(id,t){
+  const c=all.find(x=>x.clip_id===id);if(!c)return;
+  const go=()=>{vid.currentTime=Math.min(t,Math.max(c.duration-0.05,0));vid.play().catch(()=>{})};
+  if(cur!==id){cur=id;vid.src=c.play_url;vid.addEventListener('loadedmetadata',go,{once:true});vid.load()}else go();
+  $('ptitle').textContent=`${c.clip_id} ${c.filename}`;
+  document.querySelectorAll('.card.playing').forEach(x=>x.classList.remove('playing'));
+  document.querySelector(`.card[data-id="${id}"]`)?.classList.add('playing');
+}
+function step(d){const cs=all.filter(c=>match(c,$('filter').value));const i=cs.findIndex(c=>c.clip_id===cur);const n=cs[i+d]||cs[d>0?0:cs.length-1];if(n){play(n.clip_id,0);document.querySelector(`.card[data-id="${n.clip_id}"]`)?.scrollIntoView({behavior:'smooth',block:'center'})}}
+function sched(el){el.querySelector('.save-state').textContent='等待儲存……';clearTimeout(timers.get(el.dataset.id));timers.set(el.dataset.id,setTimeout(()=>save(el),600))}
+async function save(el){
+  const act=el.querySelector('.act').value,txt=el.querySelector('.txt').value.trim();let st=el.querySelector('.st').value;
+  if((act!=='NONE'||txt)&&st==='NOT_REVIEWED'){st='NO_PREFERENCE';el.querySelector('.st').value=st}
+  const s=el.querySelector('.save-state');s.textContent='儲存中……';
+  try{
+    const r=await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clip_id:el.dataset.id,status:st,reason:el.querySelector('.why').value,
+      summary_feedback:{action:act,text:txt,target_fields:['visual_summary'],affects_selection:false,updated_at:new Date().toISOString()},broll:el.querySelector('.broll').checked})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const c=all.find(x=>x.clip_id===el.dataset.id);c.human_review={status:st,broll:el.querySelector('.broll').checked,reason:el.querySelector('.why').value,summary_feedback:{action:act,text:txt,target_fields:['visual_summary'],affects_selection:false}};
+    s.textContent='已儲存';
+  }catch(e){s.textContent='儲存失敗：'+e.message}
+}
+// ---- keyboard quick review ----
+function nextUnreviewed(from){const i=all.findIndex(c=>c.clip_id===from);return all.slice(i+1).find(c=>(c.human_review?.status||'NOT_REVIEWED')==='NOT_REVIEWED')}
+function goto(c){if(!c)return;play(c.clip_id,c.hero_time);document.querySelector(`.card[data-id="${c.clip_id}"]`)?.scrollIntoView({behavior:'smooth',block:'start'})}
+function mark(status,broll){
+  if(!cur)return;const el=document.querySelector(`.card[data-id="${cur}"]`);if(!el)return;
+  el.querySelector('.st').value=status;el.querySelector('.broll').checked=!!broll;save(el);
+  const n=nextUnreviewed(cur);if(n)goto(n);else $('count').textContent='已沒有尚未審查的後續影片';
+}
+document.addEventListener('keydown',e=>{
+  if((e.target.matches&&e.target.matches('textarea,input,select'))||e.metaKey||e.ctrlKey||e.altKey)return;
+  if(e.key==='ArrowLeft'){e.preventDefault();mark('CANDIDATE',false)}
+  else if(e.key==='ArrowRight'){e.preventDefault();mark('NO_PREFERENCE',true)}
+  else if(e.key==='ArrowDown'){e.preventDefault();mark('SKIP',false)}
+  else if(e.key==='ArrowUp'){e.preventDefault();const i=all.findIndex(c=>c.clip_id===cur);if(i>0)goto(all[i-1])}
+  else if(e.key==='Backspace'){e.preventDefault();mark2('NOT_REVIEWED')}
+});
+function mark2(status){if(!cur)return;const el=document.querySelector(`.card[data-id="${cur}"]`);el.querySelector('.st').value=status;el.querySelector('.broll').checked=false;save(el)}
+$('kbStart').onclick=()=>{quickMode=false;$('filter').value='ALL';render();goto(all.find(c=>(c.human_review?.status||'NOT_REVIEWED')==='NOT_REVIEWED')||all[0])};
+vid.addEventListener('timeupdate',()=>{$('ptime').textContent=cur?`${vid.currentTime.toFixed(1)} 秒`:''});
+$('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);
+$('filter').onchange=()=>{quickMode=false;render()};
+$('quick').onclick=()=>{quickMode=!quickMode;render()};
+$('caseBtn').onclick=async()=>{
+  if(!cur){alert('請先播放一支影片');return}
+  const problem=prompt(`回報問題（${cur}，目前 ${vid.currentTime.toFixed(1)} 秒）：請描述漏掉的動作、辨識錯誤或重要聲音`);if(!problem)return;
+  const exp=prompt('希望下次檢查什麼？（可留空）')||'';
+  await fetch('/api/case',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clip_id:cur,time_range:[+vid.currentTime.toFixed(1),+vid.currentTime.toFixed(1)],problem,expected_check:exp})});
+  alert('已記錄到 review_cases.json（不會改寫 Stage 0 的事實資料）');
+};
+fetch('/api/data').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{all=d.sort((a,b)=>(a.creation_time_utc>b.creation_time_utc?1:-1));render()})
+ .catch(e=>{$('clips').innerHTML=`<div class="empty">載入失敗：${esc(e.message)}</div>`});
+</script>
+</body>
+</html>
