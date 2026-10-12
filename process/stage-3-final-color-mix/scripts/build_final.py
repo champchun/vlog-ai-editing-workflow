@@ -124,12 +124,22 @@ for sec, xs in by_sec.items():
         if m.get("YHIGH") and m["YHIGH"] > 250: a["notes"].append("highlights clipped in source (YHIGH>250) — logged, not recoverable")
         adj[sid] = a
 
+# ================= per-shot IRE grade (from grade_per_shot.py) =================
+GRADE_F = TMP / "grade.json"
+GRADE = json.load(open(GRADE_F)) if GRADE_F.exists() else {}
+log("per-shot grade", "loaded for %d shots" % len(GRADE) if GRADE else "NOT FOUND (falling back to scene matching)")
+
 # ================= pass 2: render video from Original =================
 def vf_for(x):
     s = x["s"]; a = adj[s["shot_id"]]; p = []
     if s.get("rotation") == 180: p.append("hflip,vflip")
     if x["lut"]: p.append(f"lut3d=file='{x['lut']}':interp=tetrahedral")
-    p.append(f"eq=brightness={a['brightness']}:saturation={a['saturation']}")
+    g_ = GRADE.get(s["shot_id"])
+    if g_:
+        p += g_["filters"]
+        p.append(f"eq=saturation={a['saturation']}")
+    else:
+        p.append(f"eq=brightness={a['brightness']}:saturation={a['saturation']}")
     if a["rb_gain"] != 1.0 or a["bb_gain"] != 1.0: p.append(f"colorchannelmixer=rr={a['rb_gain']}:bb={a['bb_gain']}")
     if s["speed"] != 1.0: p.append(f"setpts={1/s['speed']}*PTS")
     p += [f"scale={W}:{H}:flags=lanczos", f"fps={FPS}", "setsar=1", "format=yuv420p"]
@@ -267,6 +277,21 @@ for x in tl:
         m_ = re.match(r"lavfi\.signalstats\.(\w+)=([\d.]+)", line)
         if m_: v_[m_.group(1)].append(float(m_.group(2)))
     post[sid] = {k: round(statistics.mean(v_[k]), 1) for k in ("YAVG", "YMIN", "YMAX", "UAVG", "VAVG", "SATAVG") if v_.get(k)}
+# IRE check of the graded base frame (decoded from the rendered shot, limited-range Y -> 0-100 IRE)
+ire_check = {}
+for x in tl:
+    sid = x["s"]["shot_id"]; g_ = GRADE.get(sid)
+    if not g_: continue
+    r = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{g_['base_time_in_shot']:.3f}", "-i", str(TMP / "v" / f"{sid}.mp4"), "-frames:v", "1",
+                        "-vf", "scale=960:540,format=rgb24", "-f", "rawvideo", "-"], capture_output=True)
+    a_ = np.frombuffer(r.stdout, dtype=np.uint8).reshape(540, 960, 3).astype(np.float32) / 255
+    y_ = 0.2126 * a_[..., 0] + 0.7152 * a_[..., 1] + 0.0722 * a_[..., 2]
+    o_ = dict(black_p1=round(float(np.percentile(y_, 1)) * 100, 1), median=round(float(np.percentile(y_, 50)) * 100, 1),
+              white_p99=round(float(np.percentile(y_, 99)) * 100, 1), clip_pct_over_98=round(float((y_ > 0.98).mean()) * 100, 2))
+    if g_.get("skin_roi"):
+        x0, y0, x1, y1 = g_["skin_roi"]; o_["skin_median"] = round(float(np.median(y_[int(y0*540):int(y1*540), int(x0*960):int(x1*960)])) * 100, 1)
+    ire_check[sid] = dict(target=g_["targets"], measured_final=o_)
+fq["ire_check"] = ire_check
 jumps = []
 for a, b in zip(tl, tl[1:]):
     if a["s"]["story_section"] == b["s"]["story_section"]:
@@ -287,7 +312,7 @@ exec_log = dict(
     total_shots=len(tl), source_files=len({x["s"]["source_path"] for x in tl}), lut_applied_clips=len(lut_clips), lut_details=lut_clips,
     unknown_color_clips=sum(1 for x in tl if not x["lut"]), profile_summary=dict(profile_counts),
     exposure_adjusted_shots=[k for k, a in adj.items() if a["brightness"]], wb_adjusted_shots=[k for k, a in adj.items() if a["rb_gain"] != 1.0 or a["bb_gain"] != 1.0],
-    shot_matching=adj, audio=aud_log, dialogue_processed_shots=[x["s"]["shot_id"] for x in tl if x["s"]["audio_strategy"] == "original"],
+    shot_matching=adj, ire_grade=GRADE, audio=aud_log, dialogue_processed_shots=[x["s"]["shot_id"] for x in tl if x["s"]["audio_strategy"] == "original"],
     audio_diagnostic_scope="per-shot ebur128 integrated loudness over the cut range; no VAD, no noise reduction applied; limitation: loudness includes background noise",
     before_after_audition="NOT_VERIFIED: agent cannot listen", bgm=dict(file=str(BGM.relative_to(PRJ)), sha256=bgm_sha, beats_json=str(BEATS.relative_to(PRJ)),
     sections=bgm_sections, auditioned=False, raw_lufs=Lb, ref_gain_db=round(20 * np.log10(ref_gain), 2)),
@@ -308,7 +333,7 @@ v["timeline_integrity"] = chk("PASS" if order_ok and len(tl) == len(shots) and a
 v["color_profile_safety"] = chk("PASS", f"LUT only where camera metadata confirmed profile; unknown={exec_log['unknown_color_clips']}")
 v["technical_color"] = chk("PASS", f"{len(lut_clips)} shots with technical LUT (tetrahedral)")
 v["lut_profile_match"] = chk("PASS", "D-Log -> D-Log LUT, D-Log2 -> D-Log2 LUT; hashes in cache keys")
-v["shot_matching"] = chk("PASS_WITH_WARNINGS", f"conservative per-scene matching; adjacent luma jumps >45: {jumps}")
+v["shot_matching"] = chk("PASS_WITH_WARNINGS", f"per-shot IRE grade from base frames; adjacent luma jumps >45: {jumps}")
 v["exposure_qc"] = chk("PASS" if not exp_flags else "PASS_WITH_WARNINGS", f"flags: {exp_flags}")
 v["white_balance_qc"] = chk("PASS_WITH_WARNINGS", "measured chroma only; no skin-tone vectorscope review")
 v["audio_cleanup"] = chk("PASS_WITH_WARNINGS", "highpass + 2:1 compression + level match; no NR; not auditioned")
@@ -329,7 +354,10 @@ v["overall"] = chk(overall, "see warnings")
 json.dump(dict(overall=overall, checks=v, hashes=exec_log["hashes"], final_runtime=fq["duration"], warnings=[
     "Audio never listened by the agent (S001 speech, S010 children's voices, S011 laugh, BGM level/ducking); user audition required",
     "BGM sections chosen from beats.json energy only (AUTOMATIC_UNREVIEWED)", "No location cards: no reliable place names",
-    "S004, S013 dark scenes kept dark on purpose", "S010 picture is washed out; matching capped at +/-0.05 brightness"],
+    "Per-shot grade from director-chosen base frames (grade_per_shot.py): black/median/white mapped to IRE targets; face shots driven by skin ROI (hand-drawn boxes, S001/S003/S005/S009/S011)",
+    "S001 skin only reaches ~31 IRE (target 50): raising it further blew out the white wall, so the grade is limited by scene median<=65 / clip<=1%",
+    "Lifted shadows (S001, S002, S004, S013, S017) increase noise; bitrate rose from ~12 to ~24 Mbps", "S010 and S017 look vivid/hot after grading; judge by eye",
+    "Adjacent luma jumps >45 remain at S004->S005 and S011->S012 (see qc.adjacent_luma_jumps_gt45)"],
     qc={k: v_ for k, v_ in fq.items() if k != "post_render"}), open(OUT / "stage3_validation_report.json", "w"), ensure_ascii=False, indent=1, default=str)
 print(json.dumps(dict(overall=overall, runtime=fq["duration"], lufs=fq["integrated_lufs"], tp=fq["true_peak_dbtp"], luts=len(lut_clips),
                       exposure_adj=len(exec_log["exposure_adjusted_shots"]), wb_adj=len(exec_log["wb_adjusted_shots"]), jumps=jumps, flags=exp_flags), ensure_ascii=False))
