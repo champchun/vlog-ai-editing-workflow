@@ -27,6 +27,10 @@ Stage 0A 遞迴掃描 media，以格式與媒體探測確認 `media_type=video/p
 - `project-output/stage2_output/`
 - `project-output/stage3_output/`
 
+## 時間基準
+
+拍攝時間與 GPS/地點配對一律以影片 `creation_time`（UTC）為準，顯示給使用者時，轉成 GPS 位置所在地的當地時間（例如設備時間為台灣、但 GPS 在日本，就顯示日本時間），不固定用台灣時間；當地時區取自 Timeline 該時段的時區偏移。檔名時間與容器 timecode 不可靠（DJI Osmo Pocket 4P 曾出現檔名晚 1 小時、timecode 差 0–4 小時），只作警告與交叉檢查。
+
 ## 禁止
 
 - 不要把 Original Media 搬進 temp。
