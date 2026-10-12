@@ -22,7 +22,7 @@ FACE = 67; BLACK_OUT = 5; CAP = 95
 ROI_OVERRIDE = {"S001": (.48, .30, .60, .48)}
 # per-shot overrides (user, 2026-10-12): under-exposed / hazy / sky-dominated shots do not use the global 65-70 IRE face rule
 OVR = {
- "S001": dict(face=53.0, black_out=2.0, cg=1.2, gain_line=True),                                   # under-exposed room: face 50-55, chroma +20%, keep blacks down
+ "S001": dict(face=53.0, black_out=2.0, cg=1.1, alpha=0.85, gain_line=True),                                   # under-exposed room: face 50-55, chroma +20%, keep blacks down
  "S009": dict(face=57.5, black_float=12.0),                                         # haze: face 55-60, p1 -> ~12 IRE (blacks may float 8-12), no hard de-haze
  "S010": dict(roi=(0.0, 0.5, 0.4, 1.0), roi_stat="median", mid_out=57.5, sky_out=92.0),   # sky: p99 -> 92, ground/structure ROI -> 55-60
 }
@@ -44,13 +44,14 @@ def mono_cubic(x, y):
         return (2*s**3-3*s**2+1)*y[i] + (s**3-2*s**2+s)*h[i]*m[i] + (-2*s**3+3*s**2)*y[i+1] + (s**3-s**2)*h[i]*m[i+1]
     return f
 
-def make_cube(f, path, n=33, cg=1.0):
+def make_cube(f, path, n=33, cg=1.0, alpha=0.0):
     ax = np.linspace(0, 1, n); L = ['TITLE "luma_curve"', f"LUT_3D_SIZE {n}", "DOMAIN_MIN 0 0 0", "DOMAIN_MAX 1 1 1"]
     for b in ax:
         for g in ax:
             for r in ax:
                 y = 0.2126*r + 0.7152*g + 0.0722*b; y2 = float(f(y))
-                rgb = np.clip(y2 + cg * (np.array([r, g, b]) - y), 0, 1)
+                k = cg * (min(max(y2 / max(y, 1e-3), 1.0), 6.0) ** alpha if alpha else 1.0)     # chroma follows the luma gain (exposure-like)
+                rgb = np.clip(y2 + min(k, 3.0) * (np.array([r, g, b]) - y), 0, 1)
                 L.append(f"{rgb[0]:.6f} {rgb[1]:.6f} {rgb[2]:.6f}")
     path.write_text("\n".join(L) + "\n")
 
@@ -92,7 +93,7 @@ for s in ed:
     xs = np.linspace(0, 1, 2001); ys = np.array([f(v) for v in xs])
     assert np.all(np.diff(ys) >= -1e-9), f"{sid}: curve not monotone"
     assert ys.max() <= CAP / 100 + 1e-6, f"{sid}: curve exceeds cap"
-    tmp = CUBE_DIR / "tmp.cube"; make_cube(f, tmp, cg=cg)
+    tmp = CUBE_DIR / "tmp.cube"; make_cube(f, tmp, cg=cg, alpha=ov.get('alpha', 0.0))
     hsh = hashlib.sha256(tmp.read_bytes()).hexdigest()[:12]; cube = CUBE_DIR / f"{sid}_curve_{hsh}.cube"; tmp.rename(cube)
     vf = [f"lut3d=file='{cube}':interp=tetrahedral"]
     img = frame(s, t, vf); after = stats(img, roi); ya = luma(img)
