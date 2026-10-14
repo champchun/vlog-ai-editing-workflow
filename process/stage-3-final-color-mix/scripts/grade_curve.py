@@ -44,22 +44,29 @@ def mono_cubic(x, y):
         return (2*s**3-3*s**2+1)*y[i] + (s**3-2*s**2+s)*h[i]*m[i] + (-2*s**3+3*s**2)*y[i+1] + (s**3-s**2)*h[i]*m[i+1]
     return f
 
-def make_cube(f, path, n=33, cg=1.0, alpha=0.0):
+def make_cube(f, path, n=33, cg=1.0, alpha=0.0, wb=(1.0, 1.0)):
     ax = np.linspace(0, 1, n); L = ['TITLE "luma_curve"', f"LUT_3D_SIZE {n}", "DOMAIN_MIN 0 0 0", "DOMAIN_MAX 1 1 1"]
     for b in ax:
         for g in ax:
             for r in ax:
-                y = 0.2126*r + 0.7152*g + 0.0722*b; y2 = float(f(y))
+                rw, bw = min(r * wb[0], 1.0), min(b * wb[1], 1.0)               # skin white-balance pre-gain (R up, B down)
+                y = 0.2126*rw + 0.7152*g + 0.0722*bw; y2 = float(f(y))
                 k = cg * (min(max(y2 / max(y, 1e-3), 1.0), 6.0) ** alpha if alpha else 1.0)     # chroma follows the luma gain (exposure-like)
-                rgb = np.clip(y2 + min(k, 3.0) * (np.array([r, g, b]) - y), 0, 1)
+                rgb = np.clip(y2 + min(k, 3.0) * (np.array([rw, g, bw]) - y), 0, 1)
                 L.append(f"{rgb[0]:.6f} {rgb[1]:.6f} {rgb[2]:.6f}")
     path.write_text("\n".join(L) + "\n")
 
-def apply_np(img, f, cg, alpha):
+def apply_np(img, f, cg, alpha, wb=(1.0, 1.0)):
+    img = np.clip(img * np.array([wb[0], 1.0, wb[1]]), 0, 1)
     y = luma(img); y2 = np.vectorize(f)(y)
     ratio = np.clip(y2 / np.maximum(y, 1e-3), 1.0, 6.0)
     k = np.minimum(cg * (ratio ** alpha if alpha else 1.0), 3.0)[..., None]
     return np.clip(y2[..., None] + k * (img - y[..., None]), 0, 1)
+
+def sat_mean(a):
+    mx = a.max(-1); mn = a.min(-1); S = np.where(mx > 1e-4, (mx - mn) / np.maximum(mx, 1e-4), 0); m = (S > 0.12) & (mx > 0.04)
+    if m.sum() < 2000: m = mx > 0.04
+    return float(S[m].mean())
 
 def sat_ratio(a, b):
     def S(x):
@@ -69,7 +76,9 @@ def sat_ratio(a, b):
     return float(Sb[m].mean() / Sa[m].mean())
 
 SAT_TARGET = {"S009": 1.2}          # default 0.95: keep colour as saturated as the LUT-only picture
-SKIP_CAL = {"S001", "S010"}         # S001 hand-tuned (alpha .85), S010 sky already ~1.26
+SKIP_CAL = {"S010"}                 # sky already ~1.15
+SAT_CAP = 0.33                      # common ceiling for mean saturation of coloured pixels (too-vivid complaint, 2026-10-14)
+SKIN_RG_TARGET = 1.28               # faces whose LUT-only skin R/G is below ~1.2 are warmed up to this
 
 grade = {}
 for s in ed:
@@ -109,15 +118,27 @@ for s in ed:
     xs = np.linspace(0, 1, 2001); ys = np.array([f(v) for v in xs])
     assert np.all(np.diff(ys) >= -1e-9), f"{sid}: curve not monotone"
     assert ys.max() <= CAP / 100 + 1e-6, f"{sid}: curve exceeds cap"
-    alpha = ov.get("alpha", 0.0)
+    alpha = ov.get("alpha", 0.0); wb = (1.0, 1.0)
+    if roi and sid != "S010":
+        h2, w2 = base.shape[:2]; sk = base[int(roi[1]*h2):int(roi[3]*h2), int(roi[0]*w2):int(roi[2]*w2)].reshape(-1, 3).mean(0); rg = float(sk[0] / max(sk[1], 1e-4))
+        if rg < 1.2:
+            kr = float(np.clip(np.sqrt(SKIN_RG_TARGET / rg), 1.0, 1.06)); wb = (kr, 1.0 / kr)
     if sid not in SKIP_CAL:                                  # calibrate chroma so saturation stays ~ as in the LUT-only picture
-        tgt = SAT_TARGET.get(sid, 0.95); best = None
+        tgt = SAT_TARGET.get(sid) or min(0.95, SAT_CAP / max(sat_mean(base), 1e-3)); best = None
         grid = [(1.0, a_) for a_ in np.arange(0, 1.25, 0.05)] if sid != "S009" else [(c_, 0.0) for c_ in np.arange(0.3, 1.01, 0.05)]
+        face = roi is not None and sid != "S010"
+        if face:
+            grid = [(1.0, a_) for a_ in np.arange(0, 1.25, 0.05)] if sid != "S009" else [(c_, 0.0) for c_ in np.arange(0.3, 1.41, 0.05)]
+            h2, w2 = base.shape[:2]; sl_ = (slice(int(roi[1]*h2), int(roi[3]*h2)), slice(int(roi[0]*w2), int(roi[2]*w2)))
         for c_, a_ in grid:
-            r_ = sat_ratio(base, apply_np(base, f, c_, a_)); err = abs(r_ - tgt)
+            out_ = apply_np(base, f, c_, a_, wb); r_ = sat_ratio(base, out_)
+            if face:
+                sk_ = out_[sl_].reshape(-1, 3).mean(0); err = abs(sk_[0] / max(sk_[1], 1e-4) - 1.30) + 3.0 * max(0.0, sat_mean(out_) - 0.40)   # skin R/G ~1.30, keep S<=0.40
+            else:
+                err = abs(r_ - tgt)
             if best is None or err < best[0]: best = (err, c_, a_, r_)
         cg, alpha = float(best[1]), float(best[2]); ov = dict(ov, cg=cg, alpha=alpha, calibrated_sat_ratio=round(best[3], 2))
-    tmp = CUBE_DIR / "tmp.cube"; make_cube(f, tmp, cg=cg, alpha=alpha)
+    tmp = CUBE_DIR / "tmp.cube"; make_cube(f, tmp, cg=cg, alpha=alpha, wb=wb)
     hsh = hashlib.sha256(tmp.read_bytes()).hexdigest()[:12]; cube = CUBE_DIR / f"{sid}_curve_{hsh}.cube"; tmp.rename(cube)
     vf = [f"lut3d=file='{cube}':interp=tetrahedral"]
     img = frame(s, t, vf); after = stats(img, roi); ya = luma(img)
@@ -125,7 +146,7 @@ for s in ed:
     if roi: after["face_p90"] = round(float(np.percentile(ya[int(roi[1]*h_):int(roi[3]*h_), int(roi[0]*w_):int(roi[2]*w_)], 90)) * 100, 1)
     grade[sid] = dict(base_time_in_shot=t, base_time_source=round(s["cut_start"] + t, 3), why=why0, method="luma_curve_monotone_cube", anchor=anchor,
                       targets=dict(black_point=black_out, cap=CAP, **({"face_p90": m_out} if anchor == "face_p90" else {"anchor_median": m_out})),
-                      before=before, after=after, params=dict(chroma_gain=cg, chroma_alpha=alpha, override=ov or None, points_ire=[(round(a, 1), round(b, 1)) for a, b in pts], monotone_checked=True, cube=cube.name),
+                      before=before, after=after, params=dict(wb_gain_rb=[round(wb[0], 3), round(wb[1], 3)], chroma_gain=cg, chroma_alpha=alpha, override=ov or None, points_ire=[(round(a, 1), round(b, 1)) for a, b in pts], monotone_checked=True, cube=cube.name),
                       filters=vf, skin_roi=roi, note="")
     print(sid, anchor, [(round(a), round(b)) for a, b in pts], "after", {k: v for k, v in after.items() if k != "clip_pct_over_98"}, flush=True)
 json.dump(grade, open(TMP / "grade.json", "w"), ensure_ascii=False, indent=1)

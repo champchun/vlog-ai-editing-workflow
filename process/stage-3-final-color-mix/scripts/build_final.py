@@ -354,11 +354,11 @@ v["overall"] = chk(overall, "see warnings")
 json.dump(dict(overall=overall, checks=v, hashes=exec_log["hashes"], final_runtime=fq["duration"], warnings=[
     "Audio never listened by the agent (S001 speech, S010 children's voices, S011 laugh, BGM level/ducking); user audition required",
     "BGM sections chosen from beats.json energy only (AUTOMATIC_UNREVIEWED)", "No location cards: no reliable place names",
-    "Grade follows the user's soft luma-curve spec (grade_curve.py): strictly monotone 5-point curve (black 0->5, shadows on the diagonal, midtones lifted so face highlights ~67 IRE, highlights <=91 with soft roll-off to a 95 cap); luma only, chroma untouched, no extra saturation/WB nudge, no sharpening/clarity/local contrast, bicubic downscale",
-    "Face ROIs are hand-drawn boxes for S001/S003/S005/S009/S011 only; other shots are anchored on scene median",
-    "Measured black p1 after grade is ~7-17 IRE (not 0-5) in most shots because the lifted black point and mid lift raise the darkest pixels; S009/S010 ~30/58 IRE (haze / sky-only frames)",
-    "Very dark shots (S002, S004, S013, S017) are lifted with gain capped at ~3.5x; noise will be visible",
-    "Low-contrast result reads pale/grey in S001, S009, S010; judge by eye",
+    "Natural exposure grade (grade_natural.py, colourist's call): official technical LUT picture + exposure only; the same gain on R,G,B so saturation, white balance and skin hue are unchanged; gamma lift never darkens, gain capped at 3x, smooth highlight shoulder (<=92 IRE, cap 95); mild hqdn3d only on shots lifted >2.2x",
+    "Face ROIs are hand-drawn boxes for S001/S003/S005/S009/S011 only (face p90 -> ~58 IRE when under-exposed); other shots are anchored on scene median",
+    "Gain cap limits how bright the darkest shots get (S001 face ~50, S002/S004/S017 median ~19-24 IRE): they stay moody instead of amplifying noise",
+    "S010 (sky-only) and S009 are left at the LUT exposure; S010 reads very bright/pale by nature",
+    "A few specular pixels still reach ~100 in the encoded frames (p99 <= 91 in every shot)",
     "Adjacent luma jumps >45 remain (see qc.adjacent_luma_jumps_gt45)"],
     qc={k: v_ for k, v_ in fq.items() if k != "post_render"}), open(OUT / "stage3_validation_report.json", "w"), ensure_ascii=False, indent=1, default=str)
 print(json.dumps(dict(overall=overall, runtime=fq["duration"], lufs=fq["integrated_lufs"], tp=fq["true_peak_dbtp"], luts=len(lut_clips),
